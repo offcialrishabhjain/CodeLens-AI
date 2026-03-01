@@ -6,85 +6,55 @@
     <title>CodeLens-AI | Smart Project Analysis</title>
     <script src="https://sdk.amazonaws.com/js/aws-sdk-2.1610.0.min.js"></script>
     <style>
-        /* Modern Dark Theme */
-        body { font-family: 'Segoe UI', Roboto, Helvetica, sans-serif; background: #0f172a; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; color: #f8fafc; }
-        .container { background: #1e293b; padding: 2.5rem; border-radius: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); text-align: center; width: 550px; border: 1px solid #334155; }
-        
-        h1 { color: #38bdf8; margin-bottom: 0.5rem; display: flex; align-items: center; justify-content: center; gap: 12px; font-size: 2.2rem; }
-        p { color: #94a3b8; margin-bottom: 2rem; }
-        
-        /* Interactive Upload Box */
-        .upload-area { border: 2px dashed #38bdf8; padding: 40px; border-radius: 12px; margin-bottom: 20px; background: #0f172a; transition: 0.3s ease; cursor: pointer; }
-        .upload-area:hover { border-color: #7dd3fc; background: #1e293b; }
-        #file-name-display { color: #94a3b8; font-weight: 500; }
-
-        button { background: #38bdf8; border: none; padding: 14px 20px; color: #0f172a; font-weight: 800; border-radius: 8px; cursor: pointer; width: 100%; font-size: 1.1rem; transition: 0.3s; text-transform: uppercase; letter-spacing: 1px; }
-        button:hover { background: #7dd3fc; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(56, 189, 248, 0.4); }
-        
-        #status { margin-top: 20px; font-weight: 600; color: #38bdf8; font-size: 0.9rem; }
-
-        /* Terminal-Style Result Box for Mind Maps */
-        #result-box { 
-            margin-top: 25px; 
-            padding: 25px; 
-            background: #000000; 
-            color: #10b981; /* Matrix/Terminal Green */
-            border-radius: 12px; 
-            display: none; 
-            text-align: left; 
-            border: 1px solid #059669; 
-            font-family: 'Fira Code', 'Courier New', monospace; /* Keeps tree structure aligned */
-            font-size: 0.85rem;
-            line-height: 1.6;
-            white-space: pre-wrap; /* CRITICAL: Prevents mind map collapse */
-            max-height: 550px;
-            overflow-y: auto;
-            animation: fadeIn 0.5s ease-in;
-            box-shadow: inset 0 0 15px rgba(0,0,0,0.8);
-        }
-
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .container { background: white; padding: 2.5rem; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center; width: 450px; }
+        h1 { color: #232f3e; margin-bottom: 0.5rem; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        p { color: #666; margin-bottom: 2rem; }
+        .upload-area { border: 2px dashed #0073bb; padding: 30px; border-radius: 10px; margin-bottom: 20px; background: #fafafa; transition: 0.3s; }
+        .upload-area:hover { background: #f0f8ff; border-color: #005fa3; }
+        input[type="file"] { margin-bottom: 10px; }
+        button { background: #ff9900; border: none; padding: 12px 20px; color: white; font-weight: bold; border-radius: 6px; cursor: pointer; width: 100%; font-size: 1rem; transition: 0.2s; }
+        button:hover { background: #e68a00; transform: translateY(-1px); }
+        #status { margin-top: 15px; font-weight: 600; color: #0073bb; }
+        #result-box { margin-top: 25px; padding: 20px; background: #fff4e5; border-radius: 10px; display: none; text-align: left; border-left: 5px solid #ff9900; animation: fadeIn 0.5s ease-in; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .loader { border: 4px solid #334155; border-top: 4px solid #38bdf8; border-radius: 50%; width: 35px; height: 35px; animation: spin 1s linear infinite; display: none; margin: 20px auto; }
+        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #ff9900; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; display: none; margin: 15px auto; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        
-        .header-accent { color: #fbbf24; }
     </style>
 </head>
 <body>
 
+
 <div class="container">
-    <h1>🔍 CodeLens<span class="header-accent">AI</span></h1>
-    <p>Upload your codebase for a Deep Architecture Scan.</p>
+    <h1>🔍 CodeLens-AI</h1>
+    <p>Upload a file to see its AI purpose instantly.</p>
     
-    <div class="upload-area" onclick="document.getElementById('file-chooser').click()">
-        <input type="file" id="file-chooser" style="display:none" onchange="updateFileName(this)"/>
-        <div id="file-name-display">Click to Select ZIP Folder</div>
+    <div class="upload-area">
+        <input type="file" id="file-chooser" />
     </div>
     
-    <button id="upload-button">Execute AI Architect</button>
+    <button id="upload-button">Analyze with Nova AI</button>
     
     <div id="loader" class="loader"></div>
-    <div id="status">System Online...</div>
+    <div id="status">Waiting for file...</div>
     <div id="result-box"></div>
 </div>
 
+
 <script>
-    // 1. CONFIGURATION
+    // 1. CONFIGURATION - Use your real keys from the IAM User 'GitHub-S3-Uploader'
     AWS.config.update({
         accessKeyId: 'AKIA2HEE4M2R5EEP7EUR', 
         secretAccessKey: 'GQkSgiES18GZakWKqI0s/Hd75/5LRTEq9jl/4o0A',
         region: 'ap-south-1'
     });
 
+
     const s3 = new AWS.S3();
     const statusText = document.getElementById('status');
     const resultBox = document.getElementById('result-box');
     const loader = document.getElementById('loader');
 
-    function updateFileName(input) {
-        const display = document.getElementById('file-name-display');
-        display.innerText = input.files[0] ? `Selected: ${input.files[0].name}` : "Click to Select ZIP Folder";
-    }
 
     document.getElementById('upload-button').addEventListener('click', function() {
         const fileInput = document.getElementById('file-chooser');
@@ -95,9 +65,12 @@
             return;
         }
 
-        statusText.innerText = "[RUNNING] Uploading Encrypted Data Stream...";
+
+        // UI Reset
+        statusText.innerText = "Step 1: Uploading to S3...";
         loader.style.display = "block";
         resultBox.style.display = "none";
+
 
         const params = {
             Bucket: 'codelens-uploads-rishabh-2026',
@@ -106,17 +79,22 @@
             Body: file
         };
 
+
+        // 2. START UPLOAD
         s3.putObject(params, function(err, data) {
             if (err) {
-                statusText.innerText = "❌ ERROR_0x01: " + err.message;
+                console.error("Upload Error:", err);
+                statusText.innerText = "❌ Error: " + err.message;
                 loader.style.display = "none";
             } else {
-                statusText.innerText = "✅ UPLOAD_SUCCESS: Deciphering Codebase Structure...";
+                statusText.innerText = "Step 2: ✅ Uploaded! AI is processing...";
                 pollForResults(file.name);
             }
         });
     });
 
+
+    // 3. POLL DYNAMODB FOR AI RESULTS
     function pollForResults(fileName) {
         const docClient = new AWS.DynamoDB.DocumentClient();
         const params = {
@@ -124,43 +102,33 @@
             Key: { "fileName": fileName }
         };
 
+
+        // Check the database every 3 seconds for the AI's answer
         const interval = setInterval(() => {
             docClient.get(params, function(err, data) {
                 if (err) {
-                    console.log("WAITING_FOR_DDB_WRITE...");
+                    console.log("Database Error:", err);
                 } else if (data && data.Item) {
+                    // Success!
                     loader.style.display = "none";
-                    statusText.innerText = "✨ SCAN_COMPLETE: Architecture Mapped";
+                    statusText.innerText = "Step 3: ✨ Analysis Complete!";
                     resultBox.style.display = "block";
-                    
-                    // Regex cleaning for professional terminal output
-                    let cleanText = data.Item.analysis
-                        .replace(/###/g, '\n■') // Professional header bullet
-                        .replace(/\*\*/g, '')   // Remove markdown bold stars
-                        .replace(/\|—/g, '  └─'); // Prettier tree lines
-
-                    resultBox.innerHTML = `
-<span style="color:#38bdf8">> SOURCE: ${fileName}</span>
-<span style="color:#fbbf24">> ANALYSIS_TIMESTAMP: ${new Date().toLocaleTimeString()}</span>
-<span style="color:#94a3b8">--------------------------------------------------</span>
-
-${cleanText}`;
-                    
+                    resultBox.innerHTML = `<strong>File:</strong> ${fileName}<br><br><strong>Nova AI Result:</strong><br>${data.Item.analysis}`;
                     clearInterval(interval);
                 }
             });
         }, 3000);
 
-        // 60-second timeout for deep codebase scans
-        setTimeout(() => {
-            if(loader.style.display === "block") {
-                clearInterval(interval);
-                statusText.innerText = "❌ TIMEOUT: Bedrock is working overtime. Please refresh.";
-                loader.style.display = "none";
-            }
-        }, 60000);
+
+        // Stop checking after 30 seconds to prevent infinite loops if something fails
+        setTimeout(() => clearInterval(interval), 30000);
     }
 </script>
 
+
 </body>
 </html>
+
+
+
+
