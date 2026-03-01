@@ -4,16 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CodeLens-AI | Smart Project Analysis</title>
-    <script src="https://sdk.amazonaws.com/js/aws-sdk-2.1.0.min.js"></script>
+    <script src="https://sdk.amazonaws.com/js/aws-sdk-2.1610.0.min.js"></script>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .container { background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); text-align: center; width: 400px; }
-        h1 { color: #232f3e; margin-bottom: 1rem; }
-        .upload-area { border: 2px dashed #0073bb; padding: 20px; border-radius: 8px; margin-bottom: 20px; cursor: pointer; }
-        button { background: #ff9900; border: none; padding: 10px 20px; color: white; font-weight: bold; border-radius: 5px; cursor: pointer; width: 100%; }
-        button:hover { background: #e68a00; }
-        #result-box { margin-top: 20px; padding: 15px; background: #e7f3ff; border-radius: 8px; display: none; text-align: left; border-left: 4px solid #0073bb; }
-        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 30px; height: 30px; animation: spin 2s linear infinite; display: none; margin: 10px auto; }
+        .container { background: white; padding: 2.5rem; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center; width: 450px; }
+        h1 { color: #232f3e; margin-bottom: 0.5rem; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        p { color: #666; margin-bottom: 2rem; }
+        .upload-area { border: 2px dashed #0073bb; padding: 30px; border-radius: 10px; margin-bottom: 20px; background: #fafafa; transition: 0.3s; }
+        .upload-area:hover { background: #f0f8ff; border-color: #005fa3; }
+        input[type="file"] { margin-bottom: 10px; }
+        button { background: #ff9900; border: none; padding: 12px 20px; color: white; font-weight: bold; border-radius: 6px; cursor: pointer; width: 100%; font-size: 1rem; transition: 0.2s; }
+        button:hover { background: #e68a00; transform: translateY(-1px); }
+        #status { margin-top: 15px; font-weight: 600; color: #0073bb; }
+        #result-box { margin-top: 25px; padding: 20px; background: #fff4e5; border-radius: 10px; display: none; text-align: left; border-left: 5px solid #ff9900; animation: fadeIn 0.5s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #ff9900; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; display: none; margin: 15px auto; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
@@ -21,7 +26,7 @@
 
 <div class="container">
     <h1>🔍 CodeLens-AI</h1>
-    <p>Upload a file to see its AI purpose.</p>
+    <p>Upload a file to see its AI purpose instantly.</p>
     
     <div class="upload-area">
         <input type="file" id="file-chooser" />
@@ -35,7 +40,7 @@
 </div>
 
 <script>
-    // CONFIGURATION - Replace with your real keys
+    // 1. CONFIGURATION - Use your real keys from the IAM User 'GitHub-S3-Uploader'
     AWS.config.update({
         accessKeyId: 'YOUR_ACCESS_KEY_ID', 
         secretAccessKey: 'YOUR_SECRET_ACCESS_KEY',
@@ -43,16 +48,21 @@
     });
 
     const s3 = new AWS.S3();
-    const docClient = new AWS.DynamoDB.DocumentClient();
-    const status = document.getElementById('status');
+    const statusText = document.getElementById('status');
     const resultBox = document.getElementById('result-box');
     const loader = document.getElementById('loader');
 
     document.getElementById('upload-button').addEventListener('click', function() {
-        const file = document.getElementById('file-chooser').files[0];
-        if (!file) return alert("Please select a file!");
+        const fileInput = document.getElementById('file-chooser');
+        const file = fileInput.files[0];
+        
+        if (!file) {
+            alert("Please select a file first!");
+            return;
+        }
 
-        status.innerText = "Uploading to S3...";
+        // UI Reset
+        statusText.innerText = "Step 1: Uploading to S3...";
         loader.style.display = "block";
         resultBox.style.display = "none";
 
@@ -63,35 +73,45 @@
             Body: file
         };
 
+        // 2. START UPLOAD
         s3.putObject(params, function(err, data) {
             if (err) {
-                status.innerText = "Upload Failed: " + err.message;
+                console.error("Upload Error:", err);
+                statusText.innerText = "❌ Error: " + err.message;
                 loader.style.display = "none";
             } else {
-                status.innerText = "✅ Uploaded! AI is thinking...";
+                statusText.innerText = "Step 2: ✅ Uploaded! AI is processing...";
                 pollForResults(file.name);
             }
         });
     });
 
+    // 3. POLL DYNAMODB FOR AI RESULTS
     function pollForResults(fileName) {
+        const docClient = new AWS.DynamoDB.DocumentClient();
         const params = {
             TableName: "CodeLensResults",
             Key: { "fileName": fileName }
         };
 
-        // Check DynamoDB every 3 seconds for the AI answer
+        // Check the database every 3 seconds for the AI's answer
         const interval = setInterval(() => {
             docClient.get(params, function(err, data) {
-                if (!err && data.Item) {
+                if (err) {
+                    console.log("Database Error:", err);
+                } else if (data && data.Item) {
+                    // Success!
                     loader.style.display = "none";
-                    status.innerText = "Analysis Complete!";
+                    statusText.innerText = "Step 3: ✨ Analysis Complete!";
                     resultBox.style.display = "block";
-                    resultBox.innerHTML = `<strong>File:</strong> ${fileName}<br><br><strong>Purpose:</strong> ${data.Item.analysis}`;
+                    resultBox.innerHTML = `<strong>File:</strong> ${fileName}<br><br><strong>Nova AI Result:</strong><br>${data.Item.analysis}`;
                     clearInterval(interval);
                 }
             });
         }, 3000);
+
+        // Stop checking after 30 seconds to prevent infinite loops if something fails
+        setTimeout(() => clearInterval(interval), 30000);
     }
 </script>
 
