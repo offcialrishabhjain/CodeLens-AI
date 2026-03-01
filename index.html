@@ -1,1 +1,20 @@
 <h1>CodeLens AI - Building for Bharat</h1>
+// Function to fetch the AI result from DynamoDB
+function fetchResult(fileName) {
+    const docClient = new AWS.DynamoDB.DocumentClient();
+    const params = {
+        TableName: "CodeLensResults",
+        Key: { "fileName": fileName }
+    };
+
+    // We check every 3 seconds until the AI result appears
+    const interval = setInterval(() => {
+        docClient.get(params, function(err, data) {
+            if (!err && data.Item) {
+                document.getElementById('status').innerHTML = 
+                    "<strong>AI Analysis:</strong> " + data.Item.analysis;
+                clearInterval(interval); // Stop checking once we have the answer
+            }
+        });
+    }, 3000);
+}
