@@ -3,17 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CodeLens-AI | Smart Project Analysis</title>
+    <title>CodeLens-AI | Deep Audit Dashboard</title>
     <script src="https://sdk.amazonaws.com/js/aws-sdk-2.1610.0.min.js"></script>
     <style>
-        /* Modern Dark Theme */
-        body { font-family: 'Segoe UI', Roboto, Helvetica, sans-serif; background: #0f172a; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; color: #f8fafc; }
-        .container { background: #1e293b; padding: 2.5rem; border-radius: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); text-align: center; width: 550px; border: 1px solid #334155; }
+        /* Base Theme */
+        body { font-family: 'Segoe UI', Roboto, sans-serif; background: #0f172a; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; color: #f8fafc; }
+        .container { background: #1e293b; padding: 2.5rem; border-radius: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); text-align: center; width: 650px; border: 1px solid #334155; }
         
         h1 { color: #38bdf8; margin-bottom: 0.5rem; display: flex; align-items: center; justify-content: center; gap: 12px; font-size: 2.2rem; }
         p { color: #94a3b8; margin-bottom: 2rem; }
         
-        /* Interactive Upload Box */
         .upload-area { border: 2px dashed #38bdf8; padding: 40px; border-radius: 12px; margin-bottom: 20px; background: #0f172a; transition: 0.3s ease; cursor: pointer; }
         .upload-area:hover { border-color: #7dd3fc; background: #1e293b; }
         #file-name-display { color: #94a3b8; font-weight: 500; }
@@ -23,25 +22,41 @@
         
         #status { margin-top: 20px; font-weight: 600; color: #38bdf8; font-size: 0.9rem; }
 
-        /* Terminal-Style Result Box for Mind Maps */
+        /* Dashboard Result Container */
         #result-box { 
             margin-top: 25px; 
             padding: 25px; 
             background: #000000; 
-            color: #10b981; /* Matrix/Terminal Green */
+            color: #f8fafc; 
             border-radius: 12px; 
             display: none; 
             text-align: left; 
-            border: 1px solid #059669; 
-            font-family: 'Fira Code', 'Courier New', monospace; /* Keeps tree structure aligned */
+            border: 1px solid #334155; 
+            font-family: 'Fira Code', 'Courier New', monospace; 
             font-size: 0.85rem;
             line-height: 1.6;
-            white-space: pre-wrap; /* CRITICAL: Prevents mind map collapse */
-            max-height: 550px;
+            white-space: pre-wrap; 
+            max-height: 600px;
             overflow-y: auto;
             animation: fadeIn 0.5s ease-in;
-            box-shadow: inset 0 0 15px rgba(0,0,0,0.8);
         }
+
+        /* Color-Coded Feature Sections */
+        .feature-section {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.03);
+            border-left: 4px solid #38bdf8;
+        }
+        .section-header { font-weight: bold; font-size: 1rem; margin-bottom: 10px; display: block; }
+        
+        /* Specific Styles for Output Elements */
+        .architecture { color: #10b981; } /* Green */
+        .optimization { color: #fbbf24; } /* Yellow */
+        .security { color: #ef4444; }     /* Red */
+        .health { color: #38bdf8; }       /* Blue */
+        .mentor { color: #a855f7; }       /* Purple */
 
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .loader { border: 4px solid #334155; border-top: 4px solid #38bdf8; border-radius: 50%; width: 35px; height: 35px; animation: spin 1s linear infinite; display: none; margin: 20px auto; }
@@ -54,14 +69,14 @@
 
 <div class="container">
     <h1>🔍 CodeLens<span class="header-accent">AI</span></h1>
-    <p>Upload your codebase for a Deep Architecture Scan.</p>
+    <p>Upload repository for Architecture & Security Audit.</p>
     
     <div class="upload-area" onclick="document.getElementById('file-chooser').click()">
         <input type="file" id="file-chooser" style="display:none" onchange="updateFileName(this)"/>
-        <div id="file-name-display">Click to Select ZIP Folder</div>
+        <div id="file-name-display">Select ZIP Project Folder</div>
     </div>
     
-    <button id="upload-button">Execute AI Architect</button>
+    <button id="upload-button">Execute Deep Audit</button>
     
     <div id="loader" class="loader"></div>
     <div id="status">System Online...</div>
@@ -69,7 +84,7 @@
 </div>
 
 <script>
-    // 1. CONFIGURATION
+    // 1. AWS CONFIGURATION
     AWS.config.update({
         accessKeyId: 'AKIA2HEE4M2R5EEP7EUR', 
         secretAccessKey: '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',
@@ -83,7 +98,7 @@
 
     function updateFileName(input) {
         const display = document.getElementById('file-name-display');
-        display.innerText = input.files[0] ? `Selected: ${input.files[0].name}` : "Click to Select ZIP Folder";
+        display.innerText = input.files[0] ? `Ready: ${input.files[0].name}` : "Select ZIP Project Folder";
     }
 
     document.getElementById('upload-button').addEventListener('click', function() {
@@ -95,7 +110,7 @@
             return;
         }
 
-        statusText.innerText = "[RUNNING] Uploading Encrypted Data Stream...";
+        statusText.innerText = "[CORE_PROC] Uploading Data Stream...";
         loader.style.display = "block";
         resultBox.style.display = "none";
 
@@ -108,10 +123,10 @@
 
         s3.putObject(params, function(err, data) {
             if (err) {
-                statusText.innerText = "❌ ERROR_0x01: " + err.message;
+                statusText.innerText = "❌ ERROR: " + err.message;
                 loader.style.display = "none";
             } else {
-                statusText.innerText = "✅ UPLOAD_SUCCESS: Deciphering Codebase Structure...";
+                statusText.innerText = "✅ DATA_RECEIVED: Launching AI Audit...";
                 pollForResults(file.name);
             }
         });
@@ -127,35 +142,38 @@
         const interval = setInterval(() => {
             docClient.get(params, function(err, data) {
                 if (err) {
-                    console.log("WAITING_FOR_DDB_WRITE...");
+                    console.log("WAITING_FOR_DDB...");
                 } else if (data && data.Item) {
                     loader.style.display = "none";
-                    statusText.innerText = "✨ SCAN_COMPLETE: Architecture Mapped";
+                    statusText.innerText = "✨ AUDIT_SUCCESS: Full Report Ready";
                     resultBox.style.display = "block";
                     
-                    // Regex cleaning for professional terminal output
-                    let cleanText = data.Item.analysis
-                        .replace(/###/g, '\n■') // Professional header bullet
-                        .replace(/\*\*/g, '')   // Remove markdown bold stars
-                        .replace(/\|—/g, '  └─'); // Prettier tree lines
+                    // Dashboard Logic: Split AI text into color-coded feature sections
+                    let formattedText = data.Item.analysis
+                        .replace(/1. Architecture Mind Map:/g, '<div class="feature-section architecture"><span class="section-header">🔍 Architecture Mind Map</span>')
+                        .replace(/2. Repo Optimization:/g, '</div><div class="feature-section optimization" style="border-color:#fbbf24"><span class="section-header">🛠️ Repo Optimization Suggestions</span>')
+                        .replace(/3. Security Scan:/g, '</div><div class="feature-section security" style="border-color:#ef4444"><span class="section-header">🛡️ Security & Vulnerability Audit</span>')
+                        .replace(/4. Repo Health Score:/g, '</div><div class="feature-section health" style="border-color:#38bdf8"><span class="section-header">📊 AI Quality & Health Score</span>')
+                        .replace(/5. Interview Mentor:/g, '</div><div class="feature-section mentor" style="border-color:#a855f7"><span class="section-header">👨‍🏫 Interview Mentor & Resume Points</span>')
+                        .replace(/\|—/g, '  └─')
+                        .replace(/\*\*/g, '');
 
                     resultBox.innerHTML = `
-<span style="color:#38bdf8">> SOURCE: ${fileName}</span>
-<span style="color:#fbbf24">> ANALYSIS_TIMESTAMP: ${new Date().toLocaleTimeString()}</span>
-<span style="color:#94a3b8">--------------------------------------------------</span>
-
-${cleanText}`;
+<div style="color:#38bdf8; border-bottom:1px solid #334155; padding-bottom:10px; margin-bottom:15px;">
+> ANALYSIS_REPORT: ${fileName} <br>
+> TIMESTAMP: ${new Date().toLocaleTimeString()}
+</div>
+${formattedText}</div>`;
                     
                     clearInterval(interval);
                 }
             });
         }, 3000);
 
-        // 60-second timeout for deep codebase scans
         setTimeout(() => {
             if(loader.style.display === "block") {
                 clearInterval(interval);
-                statusText.innerText = "❌ TIMEOUT: Bedrock is working overtime. Please refresh.";
+                statusText.innerText = "❌ TIMEOUT: Scan taking longer than expected.";
                 loader.style.display = "none";
             }
         }, 60000);
