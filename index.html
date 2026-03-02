@@ -6,80 +6,76 @@
     <title>CodeLens-AI | Smart Project Analysis</title>
     <script src="https://sdk.amazonaws.com/js/aws-sdk-2.1610.0.min.js"></script>
     <style>
-        /* Base Theme & Full Page Layout */
-        body { font-family: 'Segoe UI', Roboto, sans-serif; background: #0b0f1a; margin: 0; display: flex; flex-direction: column; height: 100vh; color: #f8fafc; overflow: hidden; }
+        /* Premium Glassmorphism Theme */
+        body { font-family: 'Inter', 'Segoe UI', sans-serif; background: radial-gradient(circle at top right, #1e293b, #0b0f1a); margin: 0; display: flex; flex-direction: column; height: 100vh; color: #e2e8f0; overflow: hidden; }
         
-        /* Navigation Bar */
-        .nav-bar { background: #1e293b; padding: 15px 40px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; }
+        .nav-bar { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); padding: 15px 40px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); z-index: 10; }
         .logo { font-size: 1.6rem; font-weight: 800; color: #38bdf8; display: flex; align-items: center; gap: 10px; }
         .header-accent { color: #fbbf24; }
 
-        /* Main Workspace */
-        .main-layout { display: flex; flex: 1; padding: 20px; gap: 20px; overflow: hidden; }
+        .main-layout { display: flex; flex: 1; padding: 25px; gap: 25px; overflow: hidden; }
         
-        /* Left Panel: Sidebar Controls */
-        .control-panel { width: 350px; background: #1e293b; padding: 25px; border-radius: 15px; border: 1px solid #334155; display: flex; flex-direction: column; gap: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        /* Sidebar Glass */
+        .control-panel { width: 350px; background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(12px); padding: 25px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; gap: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         
-        /* Right Panel: Terminal Results */
-        .display-panel { flex: 1; background: #000000; border-radius: 15px; border: 1px solid #059669; padding: 30px; overflow-y: auto; font-family: 'Fira Code', 'Courier New', monospace; position: relative; box-shadow: inset 0 0 20px rgba(0,0,0,1); }
+        /* Dashboard Command Center */
+        .dashboard-panel { flex: 1; display: flex; flex-direction: column; gap: 20px; overflow: hidden; }
 
-        /* Instructional Dialogue Box */
-        .instruction-box { background: rgba(56, 189, 248, 0.1); border: 1px solid #38bdf8; padding: 15px; border-radius: 10px; text-align: left; }
-        .instruction-title { color: #38bdf8; font-weight: bold; font-size: 0.85rem; display: block; margin-bottom: 5px; }
-        .instruction-text { font-size: 0.75rem; color: #94a3b8; line-height: 1.4; margin: 0; }
+        /* Feature Button Bar */
+        .command-bar { display: flex; gap: 10px; background: rgba(15, 23, 42, 0.6); padding: 10px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.05); }
+        .nav-btn { flex: 1; padding: 12px; border: none; border-radius: 10px; background: transparent; color: #94a3b8; font-weight: 600; cursor: pointer; transition: 0.3s; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; }
+        .nav-btn.active { background: #38bdf8; color: #0f172a; box-shadow: 0 4px 12px rgba(56, 189, 248, 0.3); }
+        .nav-btn:hover:not(.active) { background: rgba(255,255,255,0.05); color: #fff; }
 
-        /* Form Styling */
-        .input-group { text-align: left; }
-        label { display: block; margin-bottom: 8px; font-size: 0.8rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
-        select, .upload-zone { width: 100%; padding: 12px; background: #0f172a; border: 1px solid #38bdf8; border-radius: 8px; color: white; cursor: pointer; box-sizing: border-box; font-size: 0.9rem; transition: 0.3s; text-align: center; }
-        select:focus, .upload-zone:hover { border-color: #7dd3fc; outline: none; }
+        /* Viewport */
+        .display-panel { flex: 1; background: rgba(0, 0, 0, 0.6); border-radius: 20px; border: 1px solid rgba(16, 185, 129, 0.3); padding: 30px; overflow-y: auto; font-family: 'Fira Code', monospace; box-shadow: inset 0 0 30px rgba(0,0,0,1); }
+
+        .instruction-box { background: rgba(56, 189, 248, 0.05); border: 1px solid rgba(56, 189, 248, 0.3); padding: 15px; border-radius: 12px; }
+        .instruction-title { color: #38bdf8; font-weight: bold; font-size: 0.8rem; display: block; margin-bottom: 5px; }
         
-        button { background: #38bdf8; color: #0f172a; border: none; padding: 16px; border-radius: 8px; font-weight: 800; cursor: pointer; transition: 0.3s; width: 100%; font-size: 1rem; text-transform: uppercase; margin-top: 10px; }
-        button:hover { background: #7dd3fc; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(56, 189, 248, 0.4); }
+        select, .upload-zone { width: 100%; padding: 12px; background: #0f172a; border: 1px solid #334155; border-radius: 10px; color: white; cursor: pointer; font-size: 0.85rem; transition: 0.3s; }
+        select:focus, .upload-zone:hover { border-color: #38bdf8; }
+        
+        button#upload-button { background: #38bdf8; color: #0f172a; border: none; padding: 16px; border-radius: 10px; font-weight: 800; cursor: pointer; transition: 0.3s; text-transform: uppercase; margin-top: 10px; }
+        button#upload-button:hover { background: #7dd3fc; transform: translateY(-2px); }
 
-        /* Analysis Card Styling */
-        #status { font-weight: 600; color: #38bdf8; font-size: 0.85rem; }
-        .feature-section { margin-top: 20px; padding: 15px; border-radius: 8px; background: rgba(255, 255, 255, 0.03); border-left: 4px solid #38bdf8; white-space: pre-wrap; line-height: 1.6; }
-        .section-header { font-weight: bold; font-size: 1rem; margin-bottom: 10px; display: block; color: #fbbf24; text-transform: uppercase; }
+        .widget-content { display: none; animation: fadeIn 0.4s ease; white-space: pre-wrap; line-height: 1.7; color: #4ade80; }
+        .widget-content.active { display: block; }
 
-        /* Loader */
-        .loader { border: 4px solid #334155; border-top: 4px solid #38bdf8; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 10px auto; display: none; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .loader { border: 3px solid #334155; border-top: 3px solid #38bdf8; border-radius: 50%; width: 25px; height: 25px; animation: spin 1s linear infinite; margin: 10px auto; display: none; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #0f172a; }
-        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
     </style>
 </head>
 <body>
 
     <div class="nav-bar">
         <div class="logo">🔍 CodeLens<span class="header-accent">AI</span></div>
-        <div id="status">System Online...</div>
+        <div id="status" style="font-size: 0.8rem; color: #38bdf8;">System: Ready</div>
     </div>
 
     <div class="main-layout">
         <div class="control-panel">
             <div class="instruction-box">
                 <span class="instruction-title">📦 GITHUB UPLOAD GUIDE</span>
-                <p class="instruction-text">
-                    For a full trace, upload the <b>ZIP file</b> from GitHub.<br><br>
-                    <i>Go to Repo > Code > <b>Download ZIP</b>.</i>
+                <p style="font-size: 0.7rem; color: #94a3b8; margin: 0; line-height: 1.4;">
+                    Upload the <b>ZIP file</b> from GitHub.<br>
+                    <i>Code > Download ZIP.</i>
                 </p>
             </div>
 
-            <div class="input-group">
-                <label>Experience Level</label>
-                <select id="user-level">
-                    <option value="Beginner">Beginner (Simple Analogies)</option>
-                    <option value="Intermediate" selected>Intermediate (Modularity Focus)</option>
-                    <option value="Advanced">Advanced (Scalability Focus)</option>
+            <div style="text-align: left;">
+                <label style="font-size: 0.75rem; font-weight: 700; color: #94a3b8; letter-spacing: 1px;">LEVEL</label>
+                <select id="user-level" style="margin-top:8px;">
+                    <option value="Beginner">Beginner</option>
+                    <option value="Intermediate" selected>Intermediate</option>
+                    <option value="Advanced">Advanced</option>
                 </select>
             </div>
 
-            <div class="input-group">
-                <label>Project Repository</label>
-                <div class="upload-zone" onclick="document.getElementById('file-chooser').click()">
+            <div style="text-align: left;">
+                <label style="font-size: 0.75rem; font-weight: 700; color: #94a3b8; letter-spacing: 1px;">REPOSITORY</label>
+                <div class="upload-zone" style="margin-top:8px;" onclick="document.getElementById('file-chooser').click()">
                     <input type="file" id="file-chooser" style="display:none" onchange="updateFileName(this)"/>
                     <span id="file-name-display">Upload downloaded ZIP folder</span>
                 </div>
@@ -87,23 +83,35 @@
 
             <button id="upload-button">Execute Deep Audit</button>
             <div id="loader" class="loader"></div>
-            
-            <p style="font-size: 0.7rem; color: #64748b; line-height: 1.4; margin-top: auto;">
-                Note: Analyzing all 8 features (Trace, Optimization, Mentor) may take 60-90 seconds.
-            </p>
         </div>
 
-        <div id="result-box" class="display-panel">
-            <div style="color: #4ade80; text-align: center; margin-top: 15%; font-family: 'Segoe UI', sans-serif;">
-                <span style="font-size: 2rem;">></span><br><br>
-                CODELENS-AI KERNEL READY<br>
-                <span style="color: #64748b; font-size: 0.9rem;">[ CHOOSE LEVEL & UPLOAD GITHUB ZIP TO BEGIN ]</span>
+        <div class="dashboard-panel">
+            <div class="command-bar">
+                <button class="nav-btn active" data-target="w-1">Visualizer</button>
+                <button class="nav-btn" data-target="w-2">Summary</button>
+                <button class="nav-btn" data-target="w-3">Trace</button>
+                <button class="nav-btn" data-target="w-4">Optimize</button>
+                <button class="nav-btn" data-target="w-5">Health</button>
+                <button class="nav-btn" data-target="w-6">Mentor</button>
+            </div>
+
+            <div id="result-box" class="display-panel">
+                <div id="placeholder" style="color: #4ade80; text-align: center; margin-top: 15%;">
+                    > KERNEL IDLE...<br>
+                    <span style="color: #64748b; font-size: 0.8rem;">[ UPLOAD ARCHIVE TO TRIGGER ANALYSIS ]</span>
+                </div>
+                
+                <div id="w-1" class="widget-content"></div>
+                <div id="w-2" class="widget-content"></div>
+                <div id="w-3" class="widget-content"></div>
+                <div id="w-4" class="widget-content"></div>
+                <div id="w-5" class="widget-content"></div>
+                <div id="w-6" class="widget-content"></div>
             </div>
         </div>
     </div>
 
 <script>
-    // 1. CONFIGURATION
     AWS.config.update({
         accessKeyId: 'AKIA2HEE4M2R5EEP7EUR', 
         secretAccessKey: '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',
@@ -115,91 +123,72 @@
     const resultBox = document.getElementById('result-box');
     const loader = document.getElementById('loader');
 
-    // Change: Updated text once a file is selected
+    // UI Tab Logic
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.widget-content').forEach(w => w.classList.remove('active'));
+            
+            btn.classList.add('active');
+            const target = btn.getAttribute('data-target');
+            const content = document.getElementById(target);
+            if(content) content.classList.add('active');
+            
+            const placeholder = document.getElementById('placeholder');
+            if(placeholder) placeholder.style.display = 'none';
+        });
+    });
+
     function updateFileName(input) {
-        const display = document.getElementById('file-name-display');
-        display.innerText = input.files[0] ? `Ready: ${input.files[0].name}` : "Upload downloaded ZIP folder";
+        document.getElementById('file-name-display').innerText = input.files[0] ? `Ready: ${input.files[0].name}` : "Upload downloaded ZIP folder";
     }
 
     document.getElementById('upload-button').addEventListener('click', function() {
         const fileInput = document.getElementById('file-chooser');
         const file = fileInput.files[0];
         const level = document.getElementById('user-level').value;
-        
-        if (!file) {
-            alert("Please select a file first!");
-            return;
-        }
+        if (!file) { alert("Select a ZIP first!"); return; }
 
-        statusText.innerText = "[RUNNING] Uploading Data Stream...";
+        statusText.innerText = "Status: Uploading Stream...";
         loader.style.display = "block";
-        resultBox.innerHTML = `<div style="color: #38bdf8; font-family: monospace;">> INITIALIZING DEEP SCAN...<br>> MODE: ${level.toUpperCase()}<br>> TARGET: ${file.name}</div>`;
 
         const params = {
             Bucket: 'codelens-uploads-rishabh-2026',
-            Key: file.name,
-            ContentType: file.type,
-            Body: file,
+            Key: file.name, ContentType: file.type, Body: file,
             Metadata: { 'user-level': level }
         };
 
         s3.putObject(params, function(err, data) {
-            if (err) {
-                statusText.innerText = "❌ ERROR: " + err.message;
-                loader.style.display = "none";
-            } else {
-                statusText.innerText = "✅ UPLOADED: Mapping Logic & Trace Flow...";
-                pollForResults(file.name, level);
-            }
+            if (err) { statusText.innerText = "Error: " + err.message; loader.style.display = "none"; }
+            else { statusText.innerText = "Status: Mapping Logic..."; pollForResults(file.name); }
         });
     });
 
-    function pollForResults(fileName, userLevel) {
+    function pollForResults(fileName) {
         const docClient = new AWS.DynamoDB.DocumentClient();
-        const params = {
-            TableName: "CodeLensResults",
-            Key: { "fileName": fileName }
-        };
+        const params = { TableName: "CodeLensResults", Key: { "fileName": fileName } };
 
         const interval = setInterval(() => {
             docClient.get(params, function(err, data) {
-                if (err) {
-                    console.log("WAITING...");
-                } else if (data && data.Item) {
+                if (data && data.Item) {
                     loader.style.display = "none";
-                    statusText.innerText = "✨ ANALYSIS COMPLETE";
+                    statusText.innerText = "Status: Audit Complete";
                     
-                    let cleanText = data.Item.analysis
-                        .replace(/### 1. Architecture Visualizer:/g, '<div class="feature-section" style="border-color:#10b981"><span class="section-header">🔍 1. Architecture Visualizer</span>')
-                        .replace(/### 2. Automated Summarization:/g, '</div><div class="feature-section" style="border-color:#38bdf8"><span class="section-header">📝 2. Codebase Summarization</span>')
-                        .replace(/### 3. Execution Trace Simulator:/g, '</div><div class="feature-section" style="border-color:#fbbf24"><span class="section-header">⚡ 3. Execution Trace Simulator</span>')
-                        .replace(/### 4. Repo Optimization & Security:/g, '</div><div class="feature-section" style="border-color:#f43f5e"><span class="section-header">🛠️ 4. Repo Optimization & Security</span>')
-                        .replace(/### 5. Repo Health Score:/g, '</div><div class="feature-section" style="border-color:#14b8a6"><span class="section-header">📊 5. Repo Health Score</span>')
-                        .replace(/### 6. Interview & Viva Mentor:/g, '</div><div class="feature-section" style="border-color:#a855f7"><span class="section-header">👨‍🏫 6. Interview & Career Mentor</span>')
-                        .replace(/###/g, '')
-                        .replace(/\*\*/g, '')
-                        .replace(/\|—/g, '  └─');
+                    const raw = data.Item.analysis;
+                    // Split content into our 6 buckets using regex
+                    document.getElementById('w-1').innerText = raw.match(/### 1\. Architecture Visualizer:([\s\S]*?)### 2/)?.[1]?.trim() || "Generating Visualizer...";
+                    document.getElementById('w-2').innerText = raw.match(/### 2\. Automated Summarization:([\s\S]*?)### 3/)?.[1]?.trim() || "Generating Summary...";
+                    document.getElementById('w-3').innerText = raw.match(/### 3\. Execution Trace Simulator:([\s\S]*?)### 4/)?.[1]?.trim() || "Generating Trace...";
+                    document.getElementById('w-4').innerText = raw.match(/### 4\. Repo Optimization & Security:([\s\S]*?)### 5/)?.[1]?.trim() || "Analyzing Optimization...";
+                    document.getElementById('w-5').innerText = raw.match(/### 5\. Repo Health Score:([\s\S]*?)### 6/)?.[1]?.trim() || "Calculating Health...";
+                    document.getElementById('w-6').innerText = raw.match(/### 6\. Interview & Career Mentor:([\s\S]*)/)?.[1]?.trim() || "Prepping Interview...";
 
-                    resultBox.innerHTML = `
-                        <div style="border-bottom: 1px solid #334155; padding-bottom: 15px; margin-bottom: 20px; display:flex; justify-content:space-between; font-family: sans-serif;">
-                            <span style="color:#38bdf8; font-weight:bold;">> SOURCE: ${fileName}</span>
-                            <span style="color:#fbbf24; font-weight:bold;">> LEVEL: ${userLevel} Mode</span>
-                        </div>
-                        ${cleanText}</div>
-                    `;
-                    
+                    // Show the active tab
+                    document.querySelector('.nav-btn.active').click();
                     clearInterval(interval);
                 }
             });
         }, 3000);
-
-        setTimeout(() => {
-            if(loader.style.display === "block") {
-                clearInterval(interval);
-                statusText.innerText = "❌ TIMEOUT: Bedrock busy. Please Refresh.";
-                loader.style.display = "none";
-            }
-        }, 95000);
     }
 </script>
 
