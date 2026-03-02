@@ -16,13 +16,13 @@
         .main-layout { display: flex; flex: 1; padding: 25px; gap: 25px; overflow: hidden; }
         
         /* Unified Sidebar Controls */
-        .control-panel { width: 350px; background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(12px); padding: 25px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; gap: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .control-panel { width: 350px; background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(12px); padding: 25px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; gap: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         
         .sidebar-label { font-size: 0.75rem; font-weight: 700; color: #94a3b8; letter-spacing: 1px; text-transform: uppercase; }
-        .sidebar-btn { background: #0f172a; border: 1px solid #334155; color: #f8fafc; padding: 12px; border-radius: 10px; cursor: pointer; text-align: center; font-size: 0.85rem; transition: 0.3s; width: 100%; box-sizing: border-box; }
+        .sidebar-btn { background: #0f172a; border: 1px solid #334155; color: #f8fafc; padding: 12px; border-radius: 10px; cursor: pointer; text-align: center; font-size: 0.85rem; transition: 0.3s; width: 100%; box-sizing: border-box; outline: none; }
         .sidebar-btn:hover { border-color: #38bdf8; background: rgba(56, 189, 248, 0.05); }
         
-        .deploy-btn { background: #38bdf8 !important; color: #0f172a !important; font-weight: 800 !important; border: none !important; }
+        .deploy-btn { background: #38bdf8 !important; color: #0f172a !important; font-weight: 800 !important; border: none !important; margin-top: 10px; }
         .deploy-btn:hover { background: #7dd3fc !important; transform: translateY(-2px); }
 
         .processing-notice { background: rgba(56, 189, 248, 0.05); border: 1px solid rgba(56, 189, 248, 0.3); padding: 15px; border-radius: 12px; font-size: 0.75rem; color: #94a3b8; line-height: 1.5; margin-top: auto; }
@@ -95,7 +95,7 @@
             <div id="loader" class="loader"></div>
 
             <div class="processing-notice">
-                ✨ <b>Please Note:</b> Building a comprehensive multi-layer execution trace and logic audit may take <b>60 to 90 seconds</b> to ensure complete architectural accuracy.
+                ✨ <b>Audit Progress:</b> Building a comprehensive multi-layer execution trace and logic audit may take <b>60 to 90 seconds</b> to ensure complete architectural accuracy.
             </div>
         </div>
 
@@ -134,6 +134,11 @@
     const statusText = document.getElementById('status');
     const loader = document.getElementById('loader');
 
+    // Strip markdown artifacts globally
+    function clean(text) {
+        return text.replace(/[#*]/g, '').trim();
+    }
+
     window.showSubView = function(widgetId, subId, btn) {
         document.querySelectorAll(`#${widgetId} .sub-view`).forEach(v => v.classList.remove('active'));
         document.querySelectorAll(`#${widgetId} .sub-btn`).forEach(b => b.classList.remove('active'));
@@ -150,7 +155,7 @@
 
     window.showInfo = function(title, text) {
         document.getElementById('modalHeader').innerText = title;
-        document.getElementById('modalText').innerText = text;
+        document.getElementById('modalText').innerText = clean(text);
         document.getElementById('infoModal').style.display = 'block';
     };
 
@@ -195,11 +200,11 @@
 
                     const getTagged = (text, tag) => {
                         const match = text.match(new RegExp(`\\[${tag}\\]:([\\s\\S]*?)(?=\\[|$)`, 'i'));
-                        return match ? match[1].trim() : "Detailed analysis content for this category is being finalized.";
+                        return match ? clean(match[1]) : "Detailed analysis content for this category is being finalized.";
                     };
 
-                    // 1. Architecture
-                    document.getElementById('w-1').innerText = getSection(1, 2);
+                    // 1. Reverted Flowchart Visualizer
+                    document.getElementById('w-1').innerText = clean(getSection(1, 2)).replace(/\|—/g, ' └─');
 
                     // 2. Explanation
                     const expText = getSection(2, 3);
@@ -214,19 +219,19 @@
                         <div id="exp-3" class="sub-view">${getTagged(expText, 'REAL_WORLD_ANALOGIES')}</div>
                     `;
 
-                    // 3. Trace Simulator Tree Construction
+                    // 3. Trace Simulator Hierarchical Construction
                     const traceRaw = getSection(3, 4);
                     let traceHtml = `<div class="simulator-instr">
                         <strong>💡 How to use the Trace Simulator:</strong><br>
                         • Click the <b>Branch Buttons</b> to expand or collapse nested execution paths.<br>
-                        • Click the <b>Yellow [?] Icon</b> for a simple, beginner-friendly explanation of that specific node.<br>
+                        • Click the <b>Yellow [?] Icon</b> for a logic explanation of that node.<br>
                         • This tree represents the actual hierarchy of file and function calls.
                     </div>`;
                     
                     traceRaw.split('\n').forEach(line => {
                         const depth = (line.match(/-/g) || []).length;
                         const parts = line.replace(/-/g, '').split('|');
-                        const name = parts[0].trim();
+                        const name = clean(parts[0]);
                         const info = parts[1] ? parts[1].replace('EXPLANATION:', '').trim() : "Execution step within the application flow.";
                         if(name) {
                             traceHtml += `
