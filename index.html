@@ -31,7 +31,7 @@
         /* Form Styling */
         .input-group { text-align: left; }
         label { display: block; margin-bottom: 8px; font-size: 0.8rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
-        select, .upload-zone { width: 100%; padding: 12px; background: #0f172a; border: 1px solid #38bdf8; border-radius: 8px; color: white; cursor: pointer; box-sizing: border-box; font-size: 0.9rem; transition: 0.3s; }
+        select, .upload-zone { width: 100%; padding: 12px; background: #0f172a; border: 1px solid #38bdf8; border-radius: 8px; color: white; cursor: pointer; box-sizing: border-box; font-size: 0.9rem; transition: 0.3s; text-align: center; }
         select:focus, .upload-zone:hover { border-color: #7dd3fc; outline: none; }
         
         button { background: #38bdf8; color: #0f172a; border: none; padding: 16px; border-radius: 8px; font-weight: 800; cursor: pointer; transition: 0.3s; width: 100%; font-size: 1rem; text-transform: uppercase; margin-top: 10px; }
@@ -81,7 +81,7 @@
                 <label>Project Repository</label>
                 <div class="upload-zone" onclick="document.getElementById('file-chooser').click()">
                     <input type="file" id="file-chooser" style="display:none" onchange="updateFileName(this)"/>
-                    <span id="file-name-display">Select GitHub ZIP</span>
+                    <span id="file-name-display">Upload downloaded ZIP folder</span>
                 </div>
             </div>
 
@@ -115,9 +115,10 @@
     const resultBox = document.getElementById('result-box');
     const loader = document.getElementById('loader');
 
+    // Change: Updated text once a file is selected
     function updateFileName(input) {
         const display = document.getElementById('file-name-display');
-        display.innerText = input.files[0] ? `Ready: ${input.files[0].name}` : "Select GitHub ZIP";
+        display.innerText = input.files[0] ? `Ready: ${input.files[0].name}` : "Upload downloaded ZIP folder";
     }
 
     document.getElementById('upload-button').addEventListener('click', function() {
