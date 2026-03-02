@@ -6,7 +6,7 @@
     <title>CodeLens-AI | Smart Project Analysis</title>
     <script src="https://sdk.amazonaws.com/js/aws-sdk-2.1610.0.min.js"></script>
     <style>
-        /* Premium Glassmorphism Theme */
+        /* Premium 2026 SaaS Theme */
         body { font-family: 'Inter', 'Segoe UI', sans-serif; background: radial-gradient(circle at top right, #1e293b, #0b0f1a); margin: 0; display: flex; flex-direction: column; height: 100vh; color: #e2e8f0; overflow: hidden; }
         
         .nav-bar { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); padding: 15px 40px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); z-index: 10; }
@@ -15,43 +15,48 @@
 
         .main-layout { display: flex; flex: 1; padding: 25px; gap: 25px; overflow: hidden; }
         
-        /* Sidebar Glass */
+        /* Sidebar Glass Effect */
         .control-panel { width: 350px; background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(12px); padding: 25px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; gap: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         
-        /* Dashboard Command Center */
         .dashboard-panel { flex: 1; display: flex; flex-direction: column; gap: 20px; overflow: hidden; }
 
-        /* Feature Button Bar */
+        /* Interactive Command Bar */
         .command-bar { display: flex; gap: 10px; background: rgba(15, 23, 42, 0.6); padding: 10px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.05); }
         .nav-btn { flex: 1; padding: 12px; border: none; border-radius: 10px; background: transparent; color: #94a3b8; font-weight: 600; cursor: pointer; transition: 0.3s; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; }
-        .nav-btn.active { background: #38bdf8; color: #0f172a; box-shadow: 0 4px 12px rgba(56, 189, 248, 0.3); }
+        .nav-btn.active { background: #38bdf8; color: #0f172a; box-shadow: 0 0 15px rgba(56, 189, 248, 0.5); font-weight: 800; }
         .nav-btn:hover:not(.active) { background: rgba(255,255,255,0.05); color: #fff; }
 
-        /* Viewport */
-        .display-panel { flex: 1; background: rgba(0, 0, 0, 0.6); border-radius: 20px; border: 1px solid rgba(16, 185, 129, 0.3); padding: 30px; overflow-y: auto; font-family: 'Fira Code', monospace; box-shadow: inset 0 0 30px rgba(0,0,0,1); }
+        /* Display Port with Scanline Effect */
+        .display-panel { flex: 1; background: rgba(0, 0, 0, 0.6); border-radius: 20px; border: 1px solid rgba(16, 185, 129, 0.3); padding: 30px; overflow-y: auto; font-family: 'Fira Code', monospace; position: relative; box-shadow: inset 0 0 30px rgba(0,0,0,1); }
+        
+        .display-panel::after { content: " "; display: block; position: absolute; top: 0; left: 0; bottom: 0; right: 0; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.02), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.02)); z-index: 2; background-size: 100% 4px, 3px 100%; pointer-events: none; }
 
         .instruction-box { background: rgba(56, 189, 248, 0.05); border: 1px solid rgba(56, 189, 248, 0.3); padding: 15px; border-radius: 12px; }
         .instruction-title { color: #38bdf8; font-weight: bold; font-size: 0.8rem; display: block; margin-bottom: 5px; }
         
-        select, .upload-zone { width: 100%; padding: 12px; background: #0f172a; border: 1px solid #334155; border-radius: 10px; color: white; cursor: pointer; font-size: 0.85rem; transition: 0.3s; }
+        select, .upload-zone { width: 100%; padding: 12px; background: #0f172a; border: 1px solid #334155; border-radius: 10px; color: white; cursor: pointer; font-size: 0.85rem; transition: 0.3s; text-align: center; }
         select:focus, .upload-zone:hover { border-color: #38bdf8; }
         
         button#upload-button { background: #38bdf8; color: #0f172a; border: none; padding: 16px; border-radius: 10px; font-weight: 800; cursor: pointer; transition: 0.3s; text-transform: uppercase; margin-top: 10px; }
-        button#upload-button:hover { background: #7dd3fc; transform: translateY(-2px); }
+        button#upload-button:hover { background: #7dd3fc; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(56, 189, 248, 0.4); }
 
-        .widget-content { display: none; animation: fadeIn 0.4s ease; white-space: pre-wrap; line-height: 1.7; color: #4ade80; }
+        .widget-content { display: none; animation: fadeIn 0.4s ease; white-space: pre-wrap; line-height: 1.7; color: #4ade80; position: relative; z-index: 5; }
         .widget-content.active { display: block; }
 
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .loader { border: 3px solid #334155; border-top: 3px solid #38bdf8; border-radius: 50%; width: 25px; height: 25px; animation: spin 1s linear infinite; margin: 10px auto; display: none; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
     </style>
 </head>
 <body>
 
     <div class="nav-bar">
         <div class="logo">🔍 CodeLens<span class="header-accent">AI</span></div>
-        <div id="status" style="font-size: 0.8rem; color: #38bdf8;">System: Ready</div>
+        <div id="status" style="font-size: 0.8rem; color: #38bdf8; font-family: monospace;">STATUS: KERNEL_IDLE</div>
     </div>
 
     <div class="main-layout">
@@ -83,6 +88,11 @@
 
             <button id="upload-button">Execute Deep Audit</button>
             <div id="loader" class="loader"></div>
+            
+            <p style="font-size: 0.65rem; color: #475569; text-align: center; margin-top: auto;">
+                AI Engine: Amazon Nova Micro v1.0<br>
+                Region: ap-south-1
+            </p>
         </div>
 
         <div class="dashboard-panel">
@@ -97,7 +107,7 @@
 
             <div id="result-box" class="display-panel">
                 <div id="placeholder" style="color: #4ade80; text-align: center; margin-top: 15%;">
-                    > KERNEL IDLE...<br>
+                    > WAITING FOR DATA STREAM...<br>
                     <span style="color: #64748b; font-size: 0.8rem;">[ UPLOAD ARCHIVE TO TRIGGER ANALYSIS ]</span>
                 </div>
                 
@@ -112,6 +122,7 @@
     </div>
 
 <script>
+    // 1. AWS CONFIG
     AWS.config.update({
         accessKeyId: 'AKIA2HEE4M2R5EEP7EUR', 
         secretAccessKey: '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',
@@ -120,10 +131,9 @@
 
     const s3 = new AWS.S3();
     const statusText = document.getElementById('status');
-    const resultBox = document.getElementById('result-box');
     const loader = document.getElementById('loader');
 
-    // UI Tab Logic
+    // 2. TAB TOGGLE LOGIC
     document.querySelectorAll('.nav-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
@@ -132,24 +142,24 @@
             btn.classList.add('active');
             const target = btn.getAttribute('data-target');
             const content = document.getElementById(target);
-            if(content) content.classList.add('active');
             
-            const placeholder = document.getElementById('placeholder');
-            if(placeholder) placeholder.style.display = 'none';
+            document.getElementById('placeholder').style.display = 'none';
+            if(content) content.classList.add('active');
         });
     });
 
     function updateFileName(input) {
-        document.getElementById('file-name-display').innerText = input.files[0] ? `Ready: ${input.files[0].name}` : "Upload downloaded ZIP folder";
+        document.getElementById('file-name-display').innerText = input.files[0] ? `Loaded: ${input.files[0].name}` : "Upload downloaded ZIP folder";
     }
 
+    // 3. UPLOAD EXECUTION
     document.getElementById('upload-button').addEventListener('click', function() {
         const fileInput = document.getElementById('file-chooser');
         const file = fileInput.files[0];
         const level = document.getElementById('user-level').value;
         if (!file) { alert("Select a ZIP first!"); return; }
 
-        statusText.innerText = "Status: Uploading Stream...";
+        statusText.innerText = "STATUS: UPLOADING_STREAM";
         loader.style.display = "block";
 
         const params = {
@@ -159,11 +169,12 @@
         };
 
         s3.putObject(params, function(err, data) {
-            if (err) { statusText.innerText = "Error: " + err.message; loader.style.display = "none"; }
-            else { statusText.innerText = "Status: Mapping Logic..."; pollForResults(file.name); }
+            if (err) { statusText.innerText = "STATUS: ERROR_S3"; loader.style.display = "none"; }
+            else { statusText.innerText = "STATUS: AI_PROCESSING"; pollForResults(file.name); }
         });
     });
 
+    // 4. POLL & FUZZY SLICE RESULTS
     function pollForResults(fileName) {
         const docClient = new AWS.DynamoDB.DocumentClient();
         const params = { TableName: "CodeLensResults", Key: { "fileName": fileName } };
@@ -172,19 +183,36 @@
             docClient.get(params, function(err, data) {
                 if (data && data.Item) {
                     loader.style.display = "none";
-                    statusText.innerText = "Status: Audit Complete";
+                    statusText.innerText = "STATUS: AUDIT_COMPLETE";
                     
                     const raw = data.Item.analysis;
-                    // Split content into our 6 buckets using regex
-                    document.getElementById('w-1').innerText = raw.match(/### 1\. Architecture Visualizer:([\s\S]*?)### 2/)?.[1]?.trim() || "Generating Visualizer...";
-                    document.getElementById('w-2').innerText = raw.match(/### 2\. Automated Summarization:([\s\S]*?)### 3/)?.[1]?.trim() || "Generating Summary...";
-                    document.getElementById('w-3').innerText = raw.match(/### 3\. Execution Trace Simulator:([\s\S]*?)### 4/)?.[1]?.trim() || "Generating Trace...";
-                    document.getElementById('w-4').innerText = raw.match(/### 4\. Repo Optimization & Security:([\s\S]*?)### 5/)?.[1]?.trim() || "Analyzing Optimization...";
-                    document.getElementById('w-5').innerText = raw.match(/### 5\. Repo Health Score:([\s\S]*?)### 6/)?.[1]?.trim() || "Calculating Health...";
-                    document.getElementById('w-6').innerText = raw.match(/### 6\. Interview & Career Mentor:([\s\S]*)/)?.[1]?.trim() || "Prepping Interview...";
 
-                    // Show the active tab
-                    document.querySelector('.nav-btn.active').click();
+                    // The "Fuzzy Slicer"
+                    const getSection = (num, nextNum) => {
+                        const startRegex = new RegExp(`### ${num}\\..*?:`, 'i');
+                        const endRegex = nextNum ? new RegExp(`### ${nextNum}\\..*?:`, 'i') : null;
+                        
+                        let startMatch = raw.match(startRegex);
+                        if (!startMatch) return `Data Stream ${num} Empty.`;
+                        
+                        let startIndex = startMatch.index + startMatch[0].length;
+                        let endIndex = endRegex ? raw.match(endRegex)?.index : raw.length;
+                        
+                        return raw.substring(startIndex, endIndex).trim();
+                    };
+
+                    // Populate Slots
+                    document.getElementById('w-1').innerText = getSection(1, 2);
+                    document.getElementById('w-2').innerText = getSection(2, 3);
+                    document.getElementById('w-3').innerText = getSection(3, 4);
+                    document.getElementById('w-4').innerText = getSection(4, 5);
+                    document.getElementById('w-5').innerText = getSection(5, 6);
+                    document.getElementById('w-6').innerText = getSection(6, null);
+
+                    // Refresh active view
+                    const activeBtn = document.querySelector('.nav-btn.active');
+                    if(activeBtn) activeBtn.click();
+                    
                     clearInterval(interval);
                 }
             });
