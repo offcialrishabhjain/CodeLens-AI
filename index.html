@@ -16,17 +16,14 @@
         .control-panel { width: 350px; background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(12px); padding: 25px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; gap: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         .dashboard-panel { flex: 1; display: flex; flex-direction: column; gap: 20px; overflow: hidden; }
 
-        /* Command Bar & Buttons */
         .command-bar { display: flex; gap: 10px; background: rgba(15, 23, 42, 0.6); padding: 10px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.05); }
         .nav-btn { flex: 1; padding: 12px; border: none; border-radius: 10px; background: transparent; color: #94a3b8; font-weight: 600; cursor: pointer; transition: 0.3s; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; }
         .nav-btn.active { background: #38bdf8; color: #0f172a; box-shadow: 0 0 15px rgba(56, 189, 248, 0.5); font-weight: 800; }
 
-        /* Enhanced Sub-Button Grid */
         .sub-btn-container { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
         .sub-btn { background: rgba(56, 189, 248, 0.1); border: 1px solid #38bdf8; color: #38bdf8; padding: 8px 15px; border-radius: 8px; font-size: 0.7rem; cursor: pointer; transition: 0.2s; text-transform: uppercase; font-weight: bold; }
-        .sub-btn:hover { background: #38bdf8; color: #0f172a; }
+        .sub-btn:hover, .sub-btn.active { background: #38bdf8; color: #0f172a; }
 
-        /* Interactive Trace Simulator */
         .trace-node { margin: 10px 0; border-left: 2px solid #fbbf24; padding-left: 15px; }
         .branch-btn { background: #1e293b; border: 1px solid #fbbf24; color: #fbbf24; padding: 10px; border-radius: 5px; cursor: pointer; display: block; width: 100%; text-align: left; font-family: monospace; }
         .branch-content { display: none; padding: 15px; background: rgba(255,255,255,0.05); margin-top: 5px; border-radius: 5px; font-size: 0.85rem; color: #e2e8f0; }
@@ -34,8 +31,12 @@
         .display-panel { flex: 1; background: rgba(0, 0, 0, 0.6); border-radius: 20px; border: 1px solid rgba(16, 185, 129, 0.3); padding: 30px; overflow-y: auto; font-family: 'Fira Code', monospace; position: relative; }
         .widget-content { display: none; animation: fadeIn 0.4s ease; white-space: pre-wrap; line-height: 1.7; color: #4ade80; }
         .widget-content.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
+        /* Sub-view content logic */
+        .sub-view { display: none; color: #e2e8f0; animation: fadeIn 0.3s ease; }
+        .sub-view.active { display: block; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
         .loader { border: 3px solid #334155; border-top: 3px solid #38bdf8; border-radius: 50%; width: 25px; height: 25px; animation: spin 1s linear infinite; margin: 10px auto; display: none; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
@@ -55,11 +56,18 @@
             </div>
             <div style="text-align: left;">
                 <label style="font-size: 0.75rem; font-weight: 700; color: #94a3b8;">LEVEL</label>
-                <select id="user-level" style="margin-top:8px;"><option value="Beginner">Beginner</option><option value="Intermediate" selected>Intermediate</option><option value="Advanced">Advanced</option></select>
+                <select id="user-level" style="margin-top:8px;">
+                    <option value="Beginner">Beginner</option>
+                    <option value="Intermediate" selected>Intermediate</option>
+                    <option value="Advanced">Advanced</option>
+                </select>
             </div>
             <div style="text-align: left;">
                 <label style="font-size: 0.75rem; font-weight: 700; color: #94a3b8;">REPOSITORY</label>
-                <div class="upload-zone" style="margin-top:8px;" onclick="document.getElementById('file-chooser').click()"><input type="file" id="file-chooser" style="display:none" onchange="updateFileName(this)"/><span id="file-name-display">Upload ZIP folder</span></div>
+                <div class="upload-zone" style="margin-top:8px;" onclick="document.getElementById('file-chooser').click()">
+                    <input type="file" id="file-chooser" style="display:none" onchange="updateFileName(this)"/>
+                    <span id="file-name-display">Upload ZIP folder</span>
+                </div>
             </div>
             <button id="upload-button">Execute Deep Audit</button>
             <div id="loader" class="loader"></div>
@@ -76,9 +84,14 @@
             </div>
             <div id="result-box" class="display-panel">
                 <div id="placeholder" style="color: #4ade80; text-align: center; margin-top: 15%;">> WAITING FOR DATA STREAM...</div>
+                
                 <div id="w-1" class="widget-content"></div>
                 <div id="w-2" class="widget-content"></div>
-                <div id="w-3" class="widget-content"></div> <div id="w-4" class="widget-content"></div> <div id="w-5" class="widget-content"></div> <div id="w-6" class="widget-content"></div> </div>
+                <div id="w-3" class="widget-content"></div>
+                <div id="w-4" class="widget-content"></div>
+                <div id="w-5" class="widget-content"></div>
+                <div id="w-6" class="widget-content"></div>
+            </div>
         </div>
     </div>
 
@@ -87,6 +100,18 @@
     const s3 = new AWS.S3();
     const statusText = document.getElementById('status');
     const loader = document.getElementById('loader');
+
+    // Global toggle function for sub-views
+    window.showSubView = function(widgetId, subId, btn) {
+        // Hide all sub-views in this widget
+        document.querySelectorAll(`#${widgetId} .sub-view`).forEach(view => view.classList.remove('active'));
+        // Deactivate all sub-btns in this widget
+        document.querySelectorAll(`#${widgetId} .sub-btn`).forEach(b => b.classList.remove('active'));
+        
+        // Show selected
+        document.getElementById(subId).classList.add('active');
+        btn.classList.add('active');
+    };
 
     document.querySelectorAll('.nav-btn').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -136,22 +161,24 @@
                     // 1. Architecture
                     document.getElementById('w-1').innerText = getSection(1, 2);
 
-                    // 2. Explanation (Analogies included)
+                    // 2. Explanation (Loaded Upfront)
                     const expText = getSection(2, 3);
                     document.getElementById('w-2').innerHTML = `
                         <div class="sub-btn-container">
-                            <button class="sub-btn" onclick="document.getElementById('exp-out').innerText = \`${getTagged(expText, 'OVERVIEW')}\` ">Overview</button>
-                            <button class="sub-btn" onclick="document.getElementById('exp-out').innerText = \`${getTagged(expText, 'LOGIC_AND_CONNECTIVITY')}\` ">Logic & Connectivity</button>
-                            <button class="sub-btn" onclick="document.getElementById('exp-out').innerText = \`${getTagged(expText, 'REAL_WORLD_ANALOGIES')}\` ">Analogies</button>
+                            <button class="sub-btn active" onclick="showSubView('w-2', 'exp-1', this)">Overview</button>
+                            <button class="sub-btn" onclick="showSubView('w-2', 'exp-2', this)">Logic</button>
+                            <button class="sub-btn" onclick="showSubView('w-2', 'exp-3', this)">Analogies</button>
                         </div>
-                        <div id="exp-out" style="color: #4ade80;">Select a mode to explain the code.</div>
+                        <div id="exp-1" class="sub-view active">${getTagged(expText, 'OVERVIEW')}</div>
+                        <div id="exp-2" class="sub-view">${getTagged(expText, 'LOGIC_AND_CONNECTIVITY')}</div>
+                        <div id="exp-3" class="sub-view">${getTagged(expText, 'REAL_WORLD_ANALOGIES')}</div>
                     `;
 
-                    // 3. Trace Simulator
+                    // 3. Simulator (Loaded Upfront)
                     const traceText = getSection(3, 4);
                     document.getElementById('w-3').innerHTML = `
                         <div class="instruction-box" style="background:rgba(251,191,36,0.1); border:1px solid #fbbf24; padding:10px; border-radius:8px; margin-bottom:15px; font-size:0.75rem;">
-                            <strong>💡 Instructions:</strong> Click the branches to expand. Click the [?] button inside branches for logic details.
+                            <strong>💡 Instructions:</strong> Click the branches to expand logic flow.
                         </div>
                         <div class="trace-node">
                             <button class="branch-btn" onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'block' ? 'none' : 'block'">🚀 Main Execution Flow (Click to Expand)</button>
@@ -159,41 +186,51 @@
                         </div>
                     `;
 
-                    // 4. Optimization
+                    // 4. Optimization (Loaded Upfront)
                     const optText = getSection(4, 5);
                     document.getElementById('w-4').innerHTML = `
                         <div class="sub-btn-container">
-                            <button class="sub-btn" onclick="document.getElementById('opt-out').innerText = \`${getTagged(optText, 'BAD_NAMING')}\` ">Naming</button>
-                            <button class="sub-btn" onclick="document.getElementById('opt-out').innerText = \`${getTagged(optText, 'DUPLICATE_LOGIC')}\` ">Logic</button>
-                            <button class="sub-btn" onclick="document.getElementById('opt-out').innerText = \`${getTagged(optText, 'SECURITY_RISKS')}\` ">Security</button>
-                            <button class="sub-btn" onclick="document.getElementById('opt-out').innerText = \`${getTagged(optText, 'OPTIMIZATION')}\` ">Optimization</button>
-                            <button class="sub-btn" onclick="document.getElementById('opt-out').innerText = \`${getTagged(optText, 'ARCHITECTURE')}\` ">Pattern</button>
+                            <button class="sub-btn active" onclick="showSubView('w-4', 'opt-1', this)">Naming</button>
+                            <button class="sub-btn" onclick="showSubView('w-4', 'opt-2', this)">Logic</button>
+                            <button class="sub-btn" onclick="showSubView('w-4', 'opt-3', this)">Security</button>
+                            <button class="sub-btn" onclick="showSubView('w-4', 'opt-4', this)">Optimization</button>
+                            <button class="sub-btn" onclick="showSubView('w-4', 'opt-5', this)">Pattern</button>
                         </div>
-                        <div id="opt-out" style="color: #fb7185;">Select a category to view optimization results.</div>
+                        <div id="opt-1" class="sub-view active">${getTagged(optText, 'BAD_NAMING')}</div>
+                        <div id="opt-2" class="sub-view">${getTagged(optText, 'DUPLICATE_LOGIC')}</div>
+                        <div id="opt-3" class="sub-view">${getTagged(optText, 'SECURITY_RISKS')}</div>
+                        <div id="opt-4" class="sub-view">${getTagged(optText, 'OPTIMIZATION')}</div>
+                        <div id="opt-5" class="sub-view">${getTagged(optText, 'ARCHITECTURE')}</div>
                     `;
 
-                    // 5. Health
+                    // 5. Health (Loaded Upfront)
                     const healthText = getSection(5, 6);
                     document.getElementById('w-5').innerHTML = `
                         <div class="sub-btn-container">
-                            <button class="sub-btn" onclick="document.getElementById('hl-out').innerText = \`${getTagged(healthText, 'READABILITY')}\` ">Readability</button>
-                            <button class="sub-btn" onclick="document.getElementById('hl-out').innerText = \`${getTagged(healthText, 'MODULARITY')}\` ">Modularity</button>
-                            <button class="sub-btn" onclick="document.getElementById('hl-out').innerText = \`${getTagged(healthText, 'SECURITY_HEALTH')}\` ">Security</button>
-                            <button class="sub-btn" onclick="document.getElementById('hl-out').innerText = \`${getTagged(healthText, 'TEST_COVERAGE')}\` ">Testing</button>
+                            <button class="sub-btn active" onclick="showSubView('w-5', 'hl-1', this)">Readability</button>
+                            <button class="sub-btn" onclick="showSubView('w-5', 'hl-2', this)">Modularity</button>
+                            <button class="sub-btn" onclick="showSubView('w-5', 'hl-3', this)">Security</button>
+                            <button class="sub-btn" onclick="showSubView('w-5', 'hl-4', this)">Testing</button>
                         </div>
-                        <div id="hl-out" style="color: #34d399;">Health Metrics analysis ready.</div>
+                        <div id="hl-1" class="sub-view active">${getTagged(healthText, 'READABILITY')}</div>
+                        <div id="hl-2" class="sub-view">${getTagged(healthText, 'MODULARITY')}</div>
+                        <div id="hl-3" class="sub-view">${getTagged(healthText, 'SECURITY_HEALTH')}</div>
+                        <div id="hl-4" class="sub-view">${getTagged(healthText, 'TEST_COVERAGE')}</div>
                     `;
 
-                    // 6. Mentor
+                    // 6. Mentor (Loaded Upfront)
                     const menText = getSection(6, null);
                     document.getElementById('w-6').innerHTML = `
                         <div class="sub-btn-container">
-                            <button class="sub-btn" onclick="document.getElementById('mn-out').innerText = \`${getTagged(menText, 'INTERVIEW_QS')}\` ">Interview Qs</button>
-                            <button class="sub-btn" onclick="document.getElementById('mn-out').innerText = \`${getTagged(menText, 'SYSTEM_DESIGN')}\` ">System Design</button>
-                            <button class="sub-btn" onclick="document.getElementById('mn-out').innerText = \`${getTagged(menText, 'RESUME_BULLETS')}\` ">Resume Bullets</button>
-                            <button class="sub-btn" onclick="document.getElementById('mn-out').innerText = \`${getTagged(menText, 'VIVA_QS')}\` ">Viva Questions</button>
+                            <button class="sub-btn active" onclick="showSubView('w-6', 'mn-1', this)">Interview Qs</button>
+                            <button class="sub-btn" onclick="showSubView('w-6', 'mn-2', this)">System Design</button>
+                            <button class="sub-btn" onclick="showSubView('w-6', 'mn-3', this)">Resume Bullets</button>
+                            <button class="sub-btn" onclick="showSubView('w-6', 'mn-4', this)">Viva Questions</button>
                         </div>
-                        <div id="mn-out" style="color: #a78bfa;">Career preparation tools loaded.</div>
+                        <div id="mn-1" class="sub-view active">${getTagged(menText, 'INTERVIEW_QS')}</div>
+                        <div id="mn-2" class="sub-view">${getTagged(menText, 'SYSTEM_DESIGN')}</div>
+                        <div id="mn-3" class="sub-view">${getTagged(menText, 'RESUME_BULLETS')}</div>
+                        <div id="mn-4" class="sub-view">${getTagged(menText, 'VIVA_QS')}</div>
                     `;
 
                     clearInterval(interval);
