@@ -8,48 +8,36 @@
     <style>
         /* Premium 2026 SaaS Theme */
         body { font-family: 'Inter', 'Segoe UI', sans-serif; background: radial-gradient(circle at top right, #1e293b, #0b0f1a); margin: 0; display: flex; flex-direction: column; height: 100vh; color: #e2e8f0; overflow: hidden; }
-        
         .nav-bar { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); padding: 15px 40px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); z-index: 10; }
         .logo { font-size: 1.6rem; font-weight: 800; color: #38bdf8; display: flex; align-items: center; gap: 10px; }
         .header-accent { color: #fbbf24; }
-
         .main-layout { display: flex; flex: 1; padding: 25px; gap: 25px; overflow: hidden; }
         
-        /* Sidebar Glass Effect */
         .control-panel { width: 350px; background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(12px); padding: 25px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; gap: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        
         .dashboard-panel { flex: 1; display: flex; flex-direction: column; gap: 20px; overflow: hidden; }
 
-        /* Interactive Command Bar */
+        /* Command Bar & Buttons */
         .command-bar { display: flex; gap: 10px; background: rgba(15, 23, 42, 0.6); padding: 10px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.05); }
         .nav-btn { flex: 1; padding: 12px; border: none; border-radius: 10px; background: transparent; color: #94a3b8; font-weight: 600; cursor: pointer; transition: 0.3s; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; }
         .nav-btn.active { background: #38bdf8; color: #0f172a; box-shadow: 0 0 15px rgba(56, 189, 248, 0.5); font-weight: 800; }
-        .nav-btn:hover:not(.active) { background: rgba(255,255,255,0.05); color: #fff; }
 
-        /* Display Port with Scanline Effect */
-        .display-panel { flex: 1; background: rgba(0, 0, 0, 0.6); border-radius: 20px; border: 1px solid rgba(16, 185, 129, 0.3); padding: 30px; overflow-y: auto; font-family: 'Fira Code', monospace; position: relative; box-shadow: inset 0 0 30px rgba(0,0,0,1); }
-        
-        .display-panel::after { content: " "; display: block; position: absolute; top: 0; left: 0; bottom: 0; right: 0; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.02), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.02)); z-index: 2; background-size: 100% 4px, 3px 100%; pointer-events: none; }
+        /* Enhanced Sub-Button Grid */
+        .sub-btn-container { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .sub-btn { background: rgba(56, 189, 248, 0.1); border: 1px solid #38bdf8; color: #38bdf8; padding: 8px 15px; border-radius: 8px; font-size: 0.7rem; cursor: pointer; transition: 0.2s; text-transform: uppercase; font-weight: bold; }
+        .sub-btn:hover { background: #38bdf8; color: #0f172a; }
 
-        .instruction-box { background: rgba(56, 189, 248, 0.05); border: 1px solid rgba(56, 189, 248, 0.3); padding: 15px; border-radius: 12px; }
-        .instruction-title { color: #38bdf8; font-weight: bold; font-size: 0.8rem; display: block; margin-bottom: 5px; }
-        
-        select, .upload-zone { width: 100%; padding: 12px; background: #0f172a; border: 1px solid #334155; border-radius: 10px; color: white; cursor: pointer; font-size: 0.85rem; transition: 0.3s; text-align: center; }
-        select:focus, .upload-zone:hover { border-color: #38bdf8; }
-        
-        button#upload-button { background: #38bdf8; color: #0f172a; border: none; padding: 16px; border-radius: 10px; font-weight: 800; cursor: pointer; transition: 0.3s; text-transform: uppercase; margin-top: 10px; }
-        button#upload-button:hover { background: #7dd3fc; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(56, 189, 248, 0.4); }
+        /* Interactive Trace Simulator */
+        .trace-node { margin: 10px 0; border-left: 2px solid #fbbf24; padding-left: 15px; }
+        .branch-btn { background: #1e293b; border: 1px solid #fbbf24; color: #fbbf24; padding: 10px; border-radius: 5px; cursor: pointer; display: block; width: 100%; text-align: left; font-family: monospace; }
+        .branch-content { display: none; padding: 15px; background: rgba(255,255,255,0.05); margin-top: 5px; border-radius: 5px; font-size: 0.85rem; color: #e2e8f0; }
 
-        .widget-content { display: none; animation: fadeIn 0.4s ease; white-space: pre-wrap; line-height: 1.7; color: #4ade80; position: relative; z-index: 5; }
+        .display-panel { flex: 1; background: rgba(0, 0, 0, 0.6); border-radius: 20px; border: 1px solid rgba(16, 185, 129, 0.3); padding: 30px; overflow-y: auto; font-family: 'Fira Code', monospace; position: relative; }
+        .widget-content { display: none; animation: fadeIn 0.4s ease; white-space: pre-wrap; line-height: 1.7; color: #4ade80; }
         .widget-content.active { display: block; }
-
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
         .loader { border: 3px solid #334155; border-top: 3px solid #38bdf8; border-radius: 50%; width: 25px; height: 25px; animation: spin 1s linear infinite; margin: 10px auto; display: none; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #0f172a; }
-        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
     </style>
 </head>
 <body>
@@ -61,164 +49,158 @@
 
     <div class="main-layout">
         <div class="control-panel">
-            <div class="instruction-box">
-                <span class="instruction-title">📦 GITHUB UPLOAD GUIDE</span>
-                <p style="font-size: 0.7rem; color: #94a3b8; margin: 0; line-height: 1.4;">
-                    Upload the <b>ZIP file</b> from GitHub.<br>
-                    <i>Code > Download ZIP.</i>
-                </p>
+            <div class="instruction-box" style="background: rgba(56, 189, 248, 0.05); border: 1px solid rgba(56, 189, 248, 0.3); padding: 15px; border-radius: 12px;">
+                <span style="color: #38bdf8; font-weight: bold; font-size: 0.8rem; display: block; margin-bottom: 5px;">📦 GITHUB UPLOAD GUIDE</span>
+                <p style="font-size: 0.7rem; color: #94a3b8; margin: 0; line-height: 1.4;">Upload ZIP from GitHub (Code > Download ZIP).</p>
             </div>
-
             <div style="text-align: left;">
-                <label style="font-size: 0.75rem; font-weight: 700; color: #94a3b8; letter-spacing: 1px;">LEVEL</label>
-                <select id="user-level" style="margin-top:8px;">
-                    <option value="Beginner">Beginner</option>
-                    <option value="Intermediate" selected>Intermediate</option>
-                    <option value="Advanced">Advanced</option>
-                </select>
+                <label style="font-size: 0.75rem; font-weight: 700; color: #94a3b8;">LEVEL</label>
+                <select id="user-level" style="margin-top:8px;"><option value="Beginner">Beginner</option><option value="Intermediate" selected>Intermediate</option><option value="Advanced">Advanced</option></select>
             </div>
-
             <div style="text-align: left;">
-                <label style="font-size: 0.75rem; font-weight: 700; color: #94a3b8; letter-spacing: 1px;">REPOSITORY</label>
-                <div class="upload-zone" style="margin-top:8px;" onclick="document.getElementById('file-chooser').click()">
-                    <input type="file" id="file-chooser" style="display:none" onchange="updateFileName(this)"/>
-                    <span id="file-name-display">Upload downloaded ZIP folder</span>
-                </div>
+                <label style="font-size: 0.75rem; font-weight: 700; color: #94a3b8;">REPOSITORY</label>
+                <div class="upload-zone" style="margin-top:8px;" onclick="document.getElementById('file-chooser').click()"><input type="file" id="file-chooser" style="display:none" onchange="updateFileName(this)"/><span id="file-name-display">Upload ZIP folder</span></div>
             </div>
-
             <button id="upload-button">Execute Deep Audit</button>
             <div id="loader" class="loader"></div>
-            
-            <p style="font-size: 0.65rem; color: #475569; text-align: center; margin-top: auto;">
-                AI Engine: Amazon Nova Micro v1.0<br>
-                Region: ap-south-1
-            </p>
         </div>
 
         <div class="dashboard-panel">
             <div class="command-bar">
                 <button class="nav-btn active" data-target="w-1">Visualizer</button>
-                <button class="nav-btn" data-target="w-2">Summary</button>
-                <button class="nav-btn" data-target="w-3">Trace</button>
+                <button class="nav-btn" data-target="w-2">Explanation</button>
+                <button class="nav-btn" data-target="w-3">Simulator</button>
                 <button class="nav-btn" data-target="w-4">Optimize</button>
                 <button class="nav-btn" data-target="w-5">Health</button>
                 <button class="nav-btn" data-target="w-6">Mentor</button>
             </div>
-
             <div id="result-box" class="display-panel">
-                <div id="placeholder" style="color: #4ade80; text-align: center; margin-top: 15%;">
-                    > WAITING FOR DATA STREAM...<br>
-                    <span style="color: #64748b; font-size: 0.8rem;">[ UPLOAD ARCHIVE TO TRIGGER ANALYSIS ]</span>
-                </div>
-                
+                <div id="placeholder" style="color: #4ade80; text-align: center; margin-top: 15%;">> WAITING FOR DATA STREAM...</div>
                 <div id="w-1" class="widget-content"></div>
                 <div id="w-2" class="widget-content"></div>
-                <div id="w-3" class="widget-content"></div>
-                <div id="w-4" class="widget-content"></div>
-                <div id="w-5" class="widget-content"></div>
-                <div id="w-6" class="widget-content"></div>
-            </div>
+                <div id="w-3" class="widget-content"></div> <div id="w-4" class="widget-content"></div> <div id="w-5" class="widget-content"></div> <div id="w-6" class="widget-content"></div> </div>
         </div>
     </div>
 
 <script>
-    // 1. AWS CONFIG
-    AWS.config.update({
-        accessKeyId: 'AKIA2HEE4M2R5EEP7EUR', 
-        secretAccessKey: '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',
-        region: 'ap-south-1'
-    });
-
+    AWS.config.update({ accessKeyId: 'AKIA2HEE4M2R5EEP7EUR', secretAccessKey: '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', region: 'ap-south-1' });
     const s3 = new AWS.S3();
     const statusText = document.getElementById('status');
     const loader = document.getElementById('loader');
 
-    // 2. TAB TOGGLE LOGIC
     document.querySelectorAll('.nav-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
             document.querySelectorAll('.widget-content').forEach(w => w.classList.remove('active'));
-            
             btn.classList.add('active');
             const target = btn.getAttribute('data-target');
-            const content = document.getElementById(target);
-            
             document.getElementById('placeholder').style.display = 'none';
-            if(content) content.classList.add('active');
+            document.getElementById(target).classList.add('active');
         });
     });
 
-    function updateFileName(input) {
-        document.getElementById('file-name-display').innerText = input.files[0] ? `Loaded: ${input.files[0].name}` : "Upload downloaded ZIP folder";
-    }
+    function updateFileName(input) { document.getElementById('file-name-display').innerText = input.files[0] ? `Ready: ${input.files[0].name}` : "Upload ZIP folder"; }
 
-    // 3. UPLOAD EXECUTION
     document.getElementById('upload-button').addEventListener('click', function() {
-        const fileInput = document.getElementById('file-chooser');
-        const file = fileInput.files[0];
+        const file = document.getElementById('file-chooser').files[0];
         const level = document.getElementById('user-level').value;
-        if (!file) { alert("Select a ZIP first!"); return; }
-
-        statusText.innerText = "STATUS: UPLOADING_STREAM";
+        if (!file) { alert("Select a ZIP!"); return; }
         loader.style.display = "block";
-
-        const params = {
-            Bucket: 'codelens-uploads-rishabh-2026',
-            Key: file.name, ContentType: file.type, Body: file,
-            Metadata: { 'user-level': level }
-        };
-
-        s3.putObject(params, function(err, data) {
-            if (err) { statusText.innerText = "STATUS: ERROR_S3"; loader.style.display = "none"; }
-            else { statusText.innerText = "STATUS: AI_PROCESSING"; pollForResults(file.name); }
+        statusText.innerText = "STATUS: PROCESSING";
+        s3.putObject({ Bucket: 'codelens-uploads-rishabh-2026', Key: file.name, ContentType: file.type, Body: file, Metadata: { 'user-level': level } }, (err) => {
+            if (err) loader.style.display = "none"; else pollForResults(file.name);
         });
     });
 
-    // 4. POLL & FUZZY SLICE RESULTS
     function pollForResults(fileName) {
         const docClient = new AWS.DynamoDB.DocumentClient();
-        const params = { TableName: "CodeLensResults", Key: { "fileName": fileName } };
-
         const interval = setInterval(() => {
-            docClient.get(params, function(err, data) {
+            docClient.get({ TableName: "CodeLensResults", Key: { "fileName": fileName } }, (err, data) => {
                 if (data && data.Item) {
                     loader.style.display = "none";
                     statusText.innerText = "STATUS: AUDIT_COMPLETE";
-                    
                     const raw = data.Item.analysis;
 
-                    // The "Fuzzy Slicer"
                     const getSection = (num, nextNum) => {
-                        const startRegex = new RegExp(`### ${num}\\..*?:`, 'i');
-                        const endRegex = nextNum ? new RegExp(`### ${nextNum}\\..*?:`, 'i') : null;
-                        
-                        let startMatch = raw.match(startRegex);
-                        if (!startMatch) return `Data Stream ${num} Empty.`;
-                        
-                        let startIndex = startMatch.index + startMatch[0].length;
-                        let endIndex = endRegex ? raw.match(endRegex)?.index : raw.length;
-                        
-                        return raw.substring(startIndex, endIndex).trim();
+                        const start = raw.match(new RegExp(`### ${num}\\..*?:`, 'i'));
+                        const end = nextNum ? raw.match(new RegExp(`### ${nextNum}\\..*?:`, 'i')) : null;
+                        if (!start) return "";
+                        return raw.substring(start.index + start[0].length, end ? end.index : raw.length).trim();
                     };
 
-                    // Populate Slots
-                    document.getElementById('w-1').innerText = getSection(1, 2);
-                    document.getElementById('w-2').innerText = getSection(2, 3);
-                    document.getElementById('w-3').innerText = getSection(3, 4);
-                    document.getElementById('w-4').innerText = getSection(4, 5);
-                    document.getElementById('w-5').innerText = getSection(5, 6);
-                    document.getElementById('w-6').innerText = getSection(6, null);
+                    const getTagged = (text, tag) => {
+                        const match = text.match(new RegExp(`\\[${tag}\\]:([\\s\\S]*?)(?=\\[|$)`, 'i'));
+                        return match ? match[1].trim() : "No data found for this category.";
+                    };
 
-                    // Refresh active view
-                    const activeBtn = document.querySelector('.nav-btn.active');
-                    if(activeBtn) activeBtn.click();
-                    
+                    // 1. Architecture
+                    document.getElementById('w-1').innerText = getSection(1, 2);
+
+                    // 2. Explanation (Analogies included)
+                    const expText = getSection(2, 3);
+                    document.getElementById('w-2').innerHTML = `
+                        <div class="sub-btn-container">
+                            <button class="sub-btn" onclick="document.getElementById('exp-out').innerText = \`${getTagged(expText, 'OVERVIEW')}\` ">Overview</button>
+                            <button class="sub-btn" onclick="document.getElementById('exp-out').innerText = \`${getTagged(expText, 'LOGIC_AND_CONNECTIVITY')}\` ">Logic & Connectivity</button>
+                            <button class="sub-btn" onclick="document.getElementById('exp-out').innerText = \`${getTagged(expText, 'REAL_WORLD_ANALOGIES')}\` ">Analogies</button>
+                        </div>
+                        <div id="exp-out" style="color: #4ade80;">Select a mode to explain the code.</div>
+                    `;
+
+                    // 3. Trace Simulator
+                    const traceText = getSection(3, 4);
+                    document.getElementById('w-3').innerHTML = `
+                        <div class="instruction-box" style="background:rgba(251,191,36,0.1); border:1px solid #fbbf24; padding:10px; border-radius:8px; margin-bottom:15px; font-size:0.75rem;">
+                            <strong>💡 Instructions:</strong> Click the branches to expand. Click the [?] button inside branches for logic details.
+                        </div>
+                        <div class="trace-node">
+                            <button class="branch-btn" onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'block' ? 'none' : 'block'">🚀 Main Execution Flow (Click to Expand)</button>
+                            <div class="branch-content">${traceText.replace(/\n/g, '<br>')}</div>
+                        </div>
+                    `;
+
+                    // 4. Optimization
+                    const optText = getSection(4, 5);
+                    document.getElementById('w-4').innerHTML = `
+                        <div class="sub-btn-container">
+                            <button class="sub-btn" onclick="document.getElementById('opt-out').innerText = \`${getTagged(optText, 'BAD_NAMING')}\` ">Naming</button>
+                            <button class="sub-btn" onclick="document.getElementById('opt-out').innerText = \`${getTagged(optText, 'DUPLICATE_LOGIC')}\` ">Logic</button>
+                            <button class="sub-btn" onclick="document.getElementById('opt-out').innerText = \`${getTagged(optText, 'SECURITY_RISKS')}\` ">Security</button>
+                            <button class="sub-btn" onclick="document.getElementById('opt-out').innerText = \`${getTagged(optText, 'OPTIMIZATION')}\` ">Optimization</button>
+                            <button class="sub-btn" onclick="document.getElementById('opt-out').innerText = \`${getTagged(optText, 'ARCHITECTURE')}\` ">Pattern</button>
+                        </div>
+                        <div id="opt-out" style="color: #fb7185;">Select a category to view optimization results.</div>
+                    `;
+
+                    // 5. Health
+                    const healthText = getSection(5, 6);
+                    document.getElementById('w-5').innerHTML = `
+                        <div class="sub-btn-container">
+                            <button class="sub-btn" onclick="document.getElementById('hl-out').innerText = \`${getTagged(healthText, 'READABILITY')}\` ">Readability</button>
+                            <button class="sub-btn" onclick="document.getElementById('hl-out').innerText = \`${getTagged(healthText, 'MODULARITY')}\` ">Modularity</button>
+                            <button class="sub-btn" onclick="document.getElementById('hl-out').innerText = \`${getTagged(healthText, 'SECURITY_HEALTH')}\` ">Security</button>
+                            <button class="sub-btn" onclick="document.getElementById('hl-out').innerText = \`${getTagged(healthText, 'TEST_COVERAGE')}\` ">Testing</button>
+                        </div>
+                        <div id="hl-out" style="color: #34d399;">Health Metrics analysis ready.</div>
+                    `;
+
+                    // 6. Mentor
+                    const menText = getSection(6, null);
+                    document.getElementById('w-6').innerHTML = `
+                        <div class="sub-btn-container">
+                            <button class="sub-btn" onclick="document.getElementById('mn-out').innerText = \`${getTagged(menText, 'INTERVIEW_QS')}\` ">Interview Qs</button>
+                            <button class="sub-btn" onclick="document.getElementById('mn-out').innerText = \`${getTagged(menText, 'SYSTEM_DESIGN')}\` ">System Design</button>
+                            <button class="sub-btn" onclick="document.getElementById('mn-out').innerText = \`${getTagged(menText, 'RESUME_BULLETS')}\` ">Resume Bullets</button>
+                            <button class="sub-btn" onclick="document.getElementById('mn-out').innerText = \`${getTagged(menText, 'VIVA_QS')}\` ">Viva Questions</button>
+                        </div>
+                        <div id="mn-out" style="color: #a78bfa;">Career preparation tools loaded.</div>
+                    `;
+
                     clearInterval(interval);
                 }
             });
         }, 3000);
     }
 </script>
-
 </body>
 </html>
