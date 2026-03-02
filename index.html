@@ -32,10 +32,10 @@
         button { background: #38bdf8; color: #0f172a; border: none; padding: 16px; border-radius: 8px; font-weight: 800; cursor: pointer; transition: 0.3s; width: 100%; font-size: 1rem; text-transform: uppercase; margin-top: 10px; }
         button:hover { background: #7dd3fc; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(56, 189, 248, 0.4); }
 
-        /* Status & Analysis Styling */
+        /* Analysis Card Styling */
         #status { font-weight: 600; color: #38bdf8; font-size: 0.85rem; }
         .feature-section { margin-top: 20px; padding: 15px; border-radius: 8px; background: rgba(255, 255, 255, 0.03); border-left: 4px solid #38bdf8; white-space: pre-wrap; line-height: 1.6; }
-        .section-header { font-weight: bold; font-size: 1rem; margin-bottom: 10px; display: block; color: #fbbf24; }
+        .section-header { font-weight: bold; font-size: 1rem; margin-bottom: 10px; display: block; color: #fbbf24; text-transform: uppercase; letter-spacing: 1px; }
 
         /* Loader */
         .loader { border: 4px solid #334155; border-top: 4px solid #38bdf8; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 15px auto; display: none; }
@@ -59,9 +59,9 @@
             <div class="input-group">
                 <label>Experience Level</label>
                 <select id="user-level">
-                    <option value="Beginner">Beginner (Simple explanations)</option>
-                    <option value="Intermediate" selected>Intermediate (Modularity focus)</option>
-                    <option value="Advanced">Advanced (Architecture focus)</option>
+                    <option value="Beginner">Beginner (Simple Analogies)</option>
+                    <option value="Intermediate" selected>Intermediate (Modularity Focus)</option>
+                    <option value="Advanced">Advanced (Scalability Focus)</option>
                 </select>
             </div>
 
@@ -77,15 +77,15 @@
             <div id="loader" class="loader"></div>
             
             <p style="font-size: 0.75rem; color: #64748b; line-height: 1.4; margin-top: auto;">
-                Note: Advanced audits may take up to 60-90 seconds to process complex logic.
+                Note: Analyzing all 8 features (Trace, Optimization, Mentor) may take 60-90 seconds.
             </p>
         </div>
 
         <div id="result-box" class="display-panel">
             <div style="color: #4ade80; text-align: center; margin-top: 15%; font-family: 'Segoe UI', sans-serif;">
                 <span style="font-size: 2rem;">></span><br><br>
-                READY FOR SCAN<br>
-                <span style="color: #64748b; font-size: 0.9rem;">[ SELECT PARAMETERS AND UPLOAD ZIP TO BEGIN ]</span>
+                CODELENS-AI KERNEL READY<br>
+                <span style="color: #64748b; font-size: 0.9rem;">[ CHOOSE LEVEL & UPLOAD ZIP TO TRACE EXECUTION ]</span>
             </div>
         </div>
     </div>
@@ -105,7 +105,7 @@
 
     function updateFileName(input) {
         const display = document.getElementById('file-name-display');
-        display.innerText = input.files[0] ? `Ready: ${input.files[0].name}` : "Select ZIP Folder";
+        display.innerText = input.files[0] ? `Loaded: ${input.files[0].name}` : "Select ZIP Folder";
     }
 
     document.getElementById('upload-button').addEventListener('click', function() {
@@ -120,17 +120,14 @@
 
         statusText.innerText = "[RUNNING] Uploading Data Stream...";
         loader.style.display = "block";
-        resultBox.innerHTML = `<div style="color: #38bdf8; font-family: monospace;">> INITIALIZING DEEP SCAN...<br>> LEVEL: ${level.toUpperCase()}<br>> FILE: ${file.name}</div>`;
+        resultBox.innerHTML = `<div style="color: #38bdf8; font-family: monospace;">> INITIALIZING DEEP SCAN...<br>> MODE: ${level.toUpperCase()}<br>> TARGET: ${file.name}</div>`;
 
         const params = {
             Bucket: 'codelens-uploads-rishabh-2026',
             Key: file.name,
             ContentType: file.type,
             Body: file,
-            // Passing the level as metadata so the Lambda can read it
-            Metadata: {
-                'user-level': level
-            }
+            Metadata: { 'user-level': level }
         };
 
         s3.putObject(params, function(err, data) {
@@ -138,7 +135,7 @@
                 statusText.innerText = "❌ ERROR: " + err.message;
                 loader.style.display = "none";
             } else {
-                statusText.innerText = "✅ UPLOADED: Analyzing Architecture...";
+                statusText.innerText = "✅ UPLOADED: Mapping Logic & Trace Flow...";
                 pollForResults(file.name, level);
             }
         });
@@ -157,23 +154,24 @@
                     console.log("WAITING...");
                 } else if (data && data.Item) {
                     loader.style.display = "none";
-                    statusText.innerText = "✨ AUDIT COMPLETE";
+                    statusText.innerText = "✨ ANALYSIS COMPLETE";
                     
-                    // Regex cleaning with color-coded section headers
+                    // Regex mapping for all 8 requested features
                     let cleanText = data.Item.analysis
-                        .replace(/### 1. Architecture Mind Map:/g, '<div class="feature-section"><span class="section-header">🔍 Architecture Mind Map</span>')
-                        .replace(/### 2. Repo Optimization:/g, '</div><div class="feature-section" style="border-color:#fbbf24"><span class="section-header">🛠️ Optimization Suggestions</span>')
-                        .replace(/### 3. Repo Health Score:/g, '</div><div class="feature-section" style="border-color:#10b981"><span class="section-header">📊 Health Metrics</span>')
-                        .replace(/### 4. Interview Mentor:/g, '</div><div class="feature-section" style="border-color:#a855f7"><span class="section-header">👨‍🏫 Interview & Career Mentor</span>')
-                        .replace(/### 5. System Design:/g, '</div><div class="feature-section" style="border-color:#38bdf8"><span class="section-header">⚙️ System Design Explanation</span>')
+                        .replace(/### 1. Architecture Visualizer:/g, '<div class="feature-section" style="border-color:#10b981"><span class="section-header">🔍 1. Architecture Visualizer</span>')
+                        .replace(/### 2. Automated Summarization:/g, '</div><div class="feature-section" style="border-color:#38bdf8"><span class="section-header">📝 2. Codebase Summarization</span>')
+                        .replace(/### 3. Execution Trace Simulator:/g, '</div><div class="feature-section" style="border-color:#fbbf24"><span class="section-header">⚡ 3. Execution Trace Simulator</span>')
+                        .replace(/### 4. Repo Optimization & Security:/g, '</div><div class="feature-section" style="border-color:#f43f5e"><span class="section-header">🛠️ 4. Repo Optimization & Security</span>')
+                        .replace(/### 5. Repo Health Score:/g, '</div><div class="feature-section" style="border-color:#14b8a6"><span class="section-header">📊 5. Repo Health Score</span>')
+                        .replace(/### 6. Interview & Viva Mentor:/g, '</div><div class="feature-section" style="border-color:#a855f7"><span class="section-header">👨‍🏫 6. Interview & Career Mentor</span>')
                         .replace(/###/g, '')
                         .replace(/\*\*/g, '')
                         .replace(/\|—/g, '  └─');
 
                     resultBox.innerHTML = `
-                        <div style="border-bottom: 1px solid #334155; padding-bottom: 15px; margin-bottom: 20px;">
-                            <span style="color:#38bdf8">> SOURCE: ${fileName}</span><br>
-                            <span style="color:#fbbf24">> LEVEL: ${userLevel} Mode</span>
+                        <div style="border-bottom: 1px solid #334155; padding-bottom: 15px; margin-bottom: 20px; display:flex; justify-content:space-between; font-family: sans-serif;">
+                            <span style="color:#38bdf8; font-weight:bold;">> SOURCE: ${fileName}</span>
+                            <span style="color:#fbbf24; font-weight:bold;">> LEVEL: ${userLevel} Mode</span>
                         </div>
                         ${cleanText}</div>
                     `;
@@ -186,10 +184,10 @@
         setTimeout(() => {
             if(loader.style.display === "block") {
                 clearInterval(interval);
-                statusText.innerText = "❌ TIMEOUT: Please Refresh";
+                statusText.innerText = "❌ TIMEOUT: Bedrock busy. Please Refresh.";
                 loader.style.display = "none";
             }
-        }, 95000); // 95 seconds for deep scans
+        }, 95000); // 95s limit
     }
 </script>
 
