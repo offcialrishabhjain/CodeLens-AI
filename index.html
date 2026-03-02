@@ -8,33 +8,56 @@
     <style>
         /* Premium 2026 SaaS Theme */
         body { font-family: 'Inter', 'Segoe UI', sans-serif; background: radial-gradient(circle at top right, #1e293b, #0b0f1a); margin: 0; display: flex; flex-direction: column; height: 100vh; color: #e2e8f0; overflow: hidden; }
+        
         .nav-bar { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); padding: 15px 40px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); z-index: 10; }
         .logo { font-size: 1.6rem; font-weight: 800; color: #38bdf8; display: flex; align-items: center; gap: 10px; }
         .header-accent { color: #fbbf24; }
+
         .main-layout { display: flex; flex: 1; padding: 25px; gap: 25px; overflow: hidden; }
         
-        .control-panel { width: 350px; background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(12px); padding: 25px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; gap: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        .dashboard-panel { flex: 1; display: flex; flex-direction: column; gap: 20px; overflow: hidden; }
+        /* Unified Sidebar Controls */
+        .control-panel { width: 350px; background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(12px); padding: 25px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; gap: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        
+        .sidebar-label { font-size: 0.75rem; font-weight: 700; color: #94a3b8; letter-spacing: 1px; text-transform: uppercase; }
+        .sidebar-btn { background: #0f172a; border: 1px solid #334155; color: #f8fafc; padding: 12px; border-radius: 10px; cursor: pointer; text-align: center; font-size: 0.85rem; transition: 0.3s; width: 100%; box-sizing: border-box; }
+        .sidebar-btn:hover { border-color: #38bdf8; background: rgba(56, 189, 248, 0.05); }
+        
+        .deploy-btn { background: #38bdf8 !important; color: #0f172a !important; font-weight: 800 !important; border: none !important; }
+        .deploy-btn:hover { background: #7dd3fc !important; transform: translateY(-2px); }
 
+        .processing-notice { background: rgba(56, 189, 248, 0.05); border: 1px solid rgba(56, 189, 248, 0.3); padding: 15px; border-radius: 12px; font-size: 0.75rem; color: #94a3b8; line-height: 1.5; margin-top: auto; }
+
+        /* Dashboard Styles */
+        .dashboard-panel { flex: 1; display: flex; flex-direction: column; gap: 20px; overflow: hidden; }
         .command-bar { display: flex; gap: 10px; background: rgba(15, 23, 42, 0.6); padding: 10px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.05); }
-        .nav-btn { flex: 1; padding: 12px; border: none; border-radius: 10px; background: transparent; color: #94a3b8; font-weight: 600; cursor: pointer; transition: 0.3s; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; }
+        .nav-btn { flex: 1; padding: 12px; border: none; border-radius: 10px; background: transparent; color: #94a3b8; font-weight: 600; cursor: pointer; transition: 0.3s; font-size: 0.75rem; text-transform: uppercase; }
         .nav-btn.active { background: #38bdf8; color: #0f172a; box-shadow: 0 0 15px rgba(56, 189, 248, 0.5); font-weight: 800; }
 
-        .sub-btn-container { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
-        .sub-btn { background: rgba(56, 189, 248, 0.1); border: 1px solid #38bdf8; color: #38bdf8; padding: 8px 15px; border-radius: 8px; font-size: 0.7rem; cursor: pointer; transition: 0.2s; text-transform: uppercase; font-weight: bold; }
-        .sub-btn:hover, .sub-btn.active { background: #38bdf8; color: #0f172a; }
-
-        .trace-node { margin: 10px 0; border-left: 2px solid #fbbf24; padding-left: 15px; }
-        .branch-btn { background: #1e293b; border: 1px solid #fbbf24; color: #fbbf24; padding: 10px; border-radius: 5px; cursor: pointer; display: block; width: 100%; text-align: left; font-family: monospace; }
-        .branch-content { display: none; padding: 15px; background: rgba(255,255,255,0.05); margin-top: 5px; border-radius: 5px; font-size: 0.85rem; color: #e2e8f0; }
-
-        .display-panel { flex: 1; background: rgba(0, 0, 0, 0.6); border-radius: 20px; border: 1px solid rgba(16, 185, 129, 0.3); padding: 30px; overflow-y: auto; font-family: 'Fira Code', monospace; position: relative; }
+        .display-panel { flex: 1; background: rgba(0, 0, 0, 0.6); border-radius: 20px; border: 1px solid rgba(16, 185, 129, 0.3); padding: 30px; overflow-y: auto; font-family: 'Fira Code', monospace; position: relative; box-shadow: inset 0 0 30px rgba(0,0,0,1); }
         .widget-content { display: none; animation: fadeIn 0.4s ease; white-space: pre-wrap; line-height: 1.7; color: #4ade80; }
         .widget-content.active { display: block; }
-        
-        /* Sub-view content logic */
+
+        /* Sub-View & Buttons */
+        .sub-btn-container { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; border-bottom: 1px solid #334155; padding-bottom: 15px; }
+        .sub-btn { background: rgba(56, 189, 248, 0.1); border: 1px solid #38bdf8; color: #38bdf8; padding: 8px 15px; border-radius: 8px; font-size: 0.7rem; cursor: pointer; transition: 0.2s; font-weight: bold; text-transform: uppercase; }
+        .sub-btn:hover, .sub-btn.active { background: #38bdf8; color: #0f172a; }
         .sub-view { display: none; color: #e2e8f0; animation: fadeIn 0.3s ease; }
         .sub-view.active { display: block; }
+
+        /* Enhanced Trace Simulator UI */
+        .simulator-instr { background: rgba(251, 191, 36, 0.05); border: 1px solid rgba(251, 191, 36, 0.3); padding: 15px; border-radius: 12px; margin-bottom: 20px; color: #fbbf24; font-size: 0.8rem; line-height: 1.4; }
+        .trace-node { margin: 8px 0; border-left: 1px dashed #334155; padding-left: 20px; position: relative; }
+        .node-row { display: flex; gap: 10px; align-items: center; }
+        .branch-btn { flex: 1; background: #1e293b; border: 1px solid #334155; color: #e2e8f0; padding: 10px 15px; border-radius: 8px; cursor: pointer; text-align: left; font-size: 0.85rem; display: flex; justify-content: space-between; align-items: center; }
+        .branch-btn:hover { border-color: #fbbf24; background: #2d3748; }
+        .info-btn { background: #fbbf24; color: #0f172a; border: none; width: 30px; height: 30px; border-radius: 6px; cursor: pointer; font-weight: 900; transition: 0.2s; flex-shrink: 0; }
+        .info-btn:hover { transform: scale(1.1); background: #fcd34d; }
+        .child-container { display: none; margin-top: 5px; }
+
+        /* Modal */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); }
+        .modal-content { background: #1e293b; margin: 10% auto; padding: 30px; border: 1px solid #fbbf24; width: 500px; border-radius: 20px; box-shadow: 0 0 40px rgba(0,0,0,0.5); position: relative; }
+        .close { position: absolute; top: 15px; right: 20px; color: #94a3b8; font-size: 24px; cursor: pointer; }
 
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
         .loader { border: 3px solid #334155; border-top: 3px solid #38bdf8; border-radius: 50%; width: 25px; height: 25px; animation: spin 1s linear infinite; margin: 10px auto; display: none; }
@@ -45,32 +68,35 @@
 
     <div class="nav-bar">
         <div class="logo">🔍 CodeLens<span class="header-accent">AI</span></div>
-        <div id="status" style="font-size: 0.8rem; color: #38bdf8; font-family: monospace;">STATUS: KERNEL_IDLE</div>
+        <div id="status" style="font-size: 0.75rem; color: #38bdf8; font-family: monospace; letter-spacing: 1px;">KERNEL_IDLE</div>
     </div>
 
     <div class="main-layout">
         <div class="control-panel">
             <div class="instruction-box" style="background: rgba(56, 189, 248, 0.05); border: 1px solid rgba(56, 189, 248, 0.3); padding: 15px; border-radius: 12px;">
-                <span style="color: #38bdf8; font-weight: bold; font-size: 0.8rem; display: block; margin-bottom: 5px;">📦 GITHUB UPLOAD GUIDE</span>
-                <p style="font-size: 0.7rem; color: #94a3b8; margin: 0; line-height: 1.4;">Upload ZIP from GitHub (Code > Download ZIP).</p>
+                <span style="color: #38bdf8; font-weight: bold; font-size: 0.8rem; display: block; margin-bottom: 5px;">📦 GITHUB UPLOAD</span>
+                <p style="font-size: 0.7rem; color: #94a3b8; margin: 0; line-height: 1.4;">Upload a GitHub ZIP (Code > Download ZIP).</p>
             </div>
-            <div style="text-align: left;">
-                <label style="font-size: 0.75rem; font-weight: 700; color: #94a3b8;">LEVEL</label>
-                <select id="user-level" style="margin-top:8px;">
-                    <option value="Beginner">Beginner</option>
-                    <option value="Intermediate" selected>Intermediate</option>
-                    <option value="Advanced">Advanced</option>
-                </select>
-            </div>
-            <div style="text-align: left;">
-                <label style="font-size: 0.75rem; font-weight: 700; color: #94a3b8;">REPOSITORY</label>
-                <div class="upload-zone" style="margin-top:8px;" onclick="document.getElementById('file-chooser').click()">
-                    <input type="file" id="file-chooser" style="display:none" onchange="updateFileName(this)"/>
-                    <span id="file-name-display">Upload ZIP folder</span>
-                </div>
-            </div>
-            <button id="upload-button">Execute Deep Audit</button>
+
+            <span class="sidebar-label">Experience Level</span>
+            <select id="user-level" class="sidebar-btn">
+                <option value="Beginner">Beginner</option>
+                <option value="Intermediate" selected>Intermediate</option>
+                <option value="Advanced">Advanced</option>
+            </select>
+
+            <span class="sidebar-label">Repository Archive</span>
+            <button class="sidebar-btn" onclick="document.getElementById('file-chooser').click()">
+                <span id="file-name-display">Upload Downloaded ZIP Folder</span>
+            </button>
+            <input type="file" id="file-chooser" style="display:none" onchange="updateFileName(this)"/>
+
+            <button id="upload-button" class="sidebar-btn deploy-btn">Deploy Audit Engine</button>
             <div id="loader" class="loader"></div>
+
+            <div class="processing-notice">
+                ✨ <b>Please Note:</b> Building a comprehensive multi-layer execution trace and logic audit may take <b>60 to 90 seconds</b> to ensure complete architectural accuracy.
+            </div>
         </div>
 
         <div class="dashboard-panel">
@@ -84,7 +110,6 @@
             </div>
             <div id="result-box" class="display-panel">
                 <div id="placeholder" style="color: #4ade80; text-align: center; margin-top: 15%;">> WAITING FOR DATA STREAM...</div>
-                
                 <div id="w-1" class="widget-content"></div>
                 <div id="w-2" class="widget-content"></div>
                 <div id="w-3" class="widget-content"></div>
@@ -95,22 +120,38 @@
         </div>
     </div>
 
+    <div id="infoModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="document.getElementById('infoModal').style.display='none'">&times;</span>
+            <h3 id="modalHeader" style="color:#fbbf24; margin-top:0;">Logic Explanation</h3>
+            <p id="modalText" style="line-height:1.6; color:#e2e8f0; font-size:0.95rem;"></p>
+        </div>
+    </div>
+
 <script>
     AWS.config.update({ accessKeyId: 'AKIA2HEE4M2R5EEP7EUR', secretAccessKey: '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', region: 'ap-south-1' });
     const s3 = new AWS.S3();
     const statusText = document.getElementById('status');
     const loader = document.getElementById('loader');
 
-    // Global toggle function for sub-views
     window.showSubView = function(widgetId, subId, btn) {
-        // Hide all sub-views in this widget
-        document.querySelectorAll(`#${widgetId} .sub-view`).forEach(view => view.classList.remove('active'));
-        // Deactivate all sub-btns in this widget
+        document.querySelectorAll(`#${widgetId} .sub-view`).forEach(v => v.classList.remove('active'));
         document.querySelectorAll(`#${widgetId} .sub-btn`).forEach(b => b.classList.remove('active'));
-        
-        // Show selected
         document.getElementById(subId).classList.add('active');
         btn.classList.add('active');
+    };
+
+    window.toggleBranch = function(btn) {
+        const container = btn.parentElement.nextElementSibling;
+        const isVisible = container.style.display === 'block';
+        container.style.display = isVisible ? 'none' : 'block';
+        btn.querySelector('.toggle-icon').innerText = isVisible ? '[+]' : '[-]';
+    };
+
+    window.showInfo = function(title, text) {
+        document.getElementById('modalHeader').innerText = title;
+        document.getElementById('modalText').innerText = text;
+        document.getElementById('infoModal').style.display = 'block';
     };
 
     document.querySelectorAll('.nav-btn').forEach(btn => {
@@ -118,22 +159,22 @@
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
             document.querySelectorAll('.widget-content').forEach(w => w.classList.remove('active'));
             btn.classList.add('active');
-            const target = btn.getAttribute('data-target');
             document.getElementById('placeholder').style.display = 'none';
-            document.getElementById(target).classList.add('active');
+            document.getElementById(btn.getAttribute('data-target')).classList.add('active');
         });
     });
 
-    function updateFileName(input) { document.getElementById('file-name-display').innerText = input.files[0] ? `Ready: ${input.files[0].name}` : "Upload ZIP folder"; }
+    function updateFileName(input) { document.getElementById('file-name-display').innerText = input.files[0] ? input.files[0].name : "Upload ZIP folder"; }
 
     document.getElementById('upload-button').addEventListener('click', function() {
         const file = document.getElementById('file-chooser').files[0];
         const level = document.getElementById('user-level').value;
-        if (!file) { alert("Select a ZIP!"); return; }
+        if (!file) { alert("Please select a ZIP folder first."); return; }
         loader.style.display = "block";
-        statusText.innerText = "STATUS: PROCESSING";
+        statusText.innerText = "STATUS: INITIALIZING_AUDIT";
         s3.putObject({ Bucket: 'codelens-uploads-rishabh-2026', Key: file.name, ContentType: file.type, Body: file, Metadata: { 'user-level': level } }, (err) => {
-            if (err) loader.style.display = "none"; else pollForResults(file.name);
+            if (err) { statusText.innerText = "STATUS: ERROR"; loader.style.display = "none"; } 
+            else { statusText.innerText = "STATUS: ANALYZING_CODEBASE"; pollForResults(file.name); }
         });
     });
 
@@ -143,30 +184,29 @@
             docClient.get({ TableName: "CodeLensResults", Key: { "fileName": fileName } }, (err, data) => {
                 if (data && data.Item) {
                     loader.style.display = "none";
-                    statusText.innerText = "STATUS: AUDIT_COMPLETE";
+                    statusText.innerText = "STATUS: ANALYSIS_SYNCED";
                     const raw = data.Item.analysis;
 
                     const getSection = (num, nextNum) => {
                         const start = raw.match(new RegExp(`### ${num}\\..*?:`, 'i'));
                         const end = nextNum ? raw.match(new RegExp(`### ${nextNum}\\..*?:`, 'i')) : null;
-                        if (!start) return "";
-                        return raw.substring(start.index + start[0].length, end ? end.index : raw.length).trim();
+                        return start ? raw.substring(start.index + start[0].length, end ? end.index : raw.length).trim() : "";
                     };
 
                     const getTagged = (text, tag) => {
                         const match = text.match(new RegExp(`\\[${tag}\\]:([\\s\\S]*?)(?=\\[|$)`, 'i'));
-                        return match ? match[1].trim() : "No data found for this category.";
+                        return match ? match[1].trim() : "Detailed analysis content for this category is being finalized.";
                     };
 
                     // 1. Architecture
                     document.getElementById('w-1').innerText = getSection(1, 2);
 
-                    // 2. Explanation (Loaded Upfront)
+                    // 2. Explanation
                     const expText = getSection(2, 3);
                     document.getElementById('w-2').innerHTML = `
                         <div class="sub-btn-container">
                             <button class="sub-btn active" onclick="showSubView('w-2', 'exp-1', this)">Overview</button>
-                            <button class="sub-btn" onclick="showSubView('w-2', 'exp-2', this)">Logic</button>
+                            <button class="sub-btn" onclick="showSubView('w-2', 'exp-2', this)">Logic Flow</button>
                             <button class="sub-btn" onclick="showSubView('w-2', 'exp-3', this)">Analogies</button>
                         </div>
                         <div id="exp-1" class="sub-view active">${getTagged(expText, 'OVERVIEW')}</div>
@@ -174,27 +214,45 @@
                         <div id="exp-3" class="sub-view">${getTagged(expText, 'REAL_WORLD_ANALOGIES')}</div>
                     `;
 
-                    // 3. Simulator (Loaded Upfront)
-                    const traceText = getSection(3, 4);
-                    document.getElementById('w-3').innerHTML = `
-                        <div class="instruction-box" style="background:rgba(251,191,36,0.1); border:1px solid #fbbf24; padding:10px; border-radius:8px; margin-bottom:15px; font-size:0.75rem;">
-                            <strong>💡 Instructions:</strong> Click the branches to expand logic flow.
-                        </div>
-                        <div class="trace-node">
-                            <button class="branch-btn" onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'block' ? 'none' : 'block'">🚀 Main Execution Flow (Click to Expand)</button>
-                            <div class="branch-content">${traceText.replace(/\n/g, '<br>')}</div>
-                        </div>
-                    `;
+                    // 3. Trace Simulator Tree Construction
+                    const traceRaw = getSection(3, 4);
+                    let traceHtml = `<div class="simulator-instr">
+                        <strong>💡 How to use the Trace Simulator:</strong><br>
+                        • Click the <b>Branch Buttons</b> to expand or collapse nested execution paths.<br>
+                        • Click the <b>Yellow [?] Icon</b> for a simple, beginner-friendly explanation of that specific node.<br>
+                        • This tree represents the actual hierarchy of file and function calls.
+                    </div>`;
+                    
+                    traceRaw.split('\n').forEach(line => {
+                        const depth = (line.match(/-/g) || []).length;
+                        const parts = line.replace(/-/g, '').split('|');
+                        const name = parts[0].trim();
+                        const info = parts[1] ? parts[1].replace('EXPLANATION:', '').trim() : "Execution step within the application flow.";
+                        if(name) {
+                            traceHtml += `
+                            <div class="trace-node" style="margin-left: ${depth * 20}px">
+                                <div class="node-row">
+                                    <button class="branch-btn" onclick="toggleBranch(this)">
+                                        <span>${name}</span>
+                                        <span class="toggle-icon" style="font-size:0.7rem; opacity:0.6;">[+]</span>
+                                    </button>
+                                    <button class="info-btn" onclick="showInfo('${name}', '${info}')">?</button>
+                                </div>
+                                <div class="child-container"></div>
+                            </div>`;
+                        }
+                    });
+                    document.getElementById('w-3').innerHTML = traceHtml;
 
-                    // 4. Optimization (Loaded Upfront)
+                    // 4. Optimization
                     const optText = getSection(4, 5);
                     document.getElementById('w-4').innerHTML = `
                         <div class="sub-btn-container">
                             <button class="sub-btn active" onclick="showSubView('w-4', 'opt-1', this)">Naming</button>
                             <button class="sub-btn" onclick="showSubView('w-4', 'opt-2', this)">Logic</button>
                             <button class="sub-btn" onclick="showSubView('w-4', 'opt-3', this)">Security</button>
-                            <button class="sub-btn" onclick="showSubView('w-4', 'opt-4', this)">Optimization</button>
-                            <button class="sub-btn" onclick="showSubView('w-4', 'opt-5', this)">Pattern</button>
+                            <button class="sub-btn" onclick="showSubView('w-4', 'opt-4', this)">Performance</button>
+                            <button class="sub-btn" onclick="showSubView('w-4', 'opt-5', this)">Architecture</button>
                         </div>
                         <div id="opt-1" class="sub-view active">${getTagged(optText, 'BAD_NAMING')}</div>
                         <div id="opt-2" class="sub-view">${getTagged(optText, 'DUPLICATE_LOGIC')}</div>
@@ -203,8 +261,8 @@
                         <div id="opt-5" class="sub-view">${getTagged(optText, 'ARCHITECTURE')}</div>
                     `;
 
-                    // 5. Health (Loaded Upfront)
-                    const healthText = getSection(5, 6);
+                    // 5. Health
+                    const hlText = getSection(5, 6);
                     document.getElementById('w-5').innerHTML = `
                         <div class="sub-btn-container">
                             <button class="sub-btn active" onclick="showSubView('w-5', 'hl-1', this)">Readability</button>
@@ -212,25 +270,25 @@
                             <button class="sub-btn" onclick="showSubView('w-5', 'hl-3', this)">Security</button>
                             <button class="sub-btn" onclick="showSubView('w-5', 'hl-4', this)">Testing</button>
                         </div>
-                        <div id="hl-1" class="sub-view active">${getTagged(healthText, 'READABILITY')}</div>
-                        <div id="hl-2" class="sub-view">${getTagged(healthText, 'MODULARITY')}</div>
-                        <div id="hl-3" class="sub-view">${getTagged(healthText, 'SECURITY_HEALTH')}</div>
-                        <div id="hl-4" class="sub-view">${getTagged(healthText, 'TEST_COVERAGE')}</div>
+                        <div id="hl-1" class="sub-view active">${getTagged(hlText, 'READABILITY')}</div>
+                        <div id="hl-2" class="sub-view">${getTagged(hlText, 'MODULARITY')}</div>
+                        <div id="hl-3" class="sub-view">${getTagged(hlText, 'SECURITY_HEALTH')}</div>
+                        <div id="hl-4" class="sub-view">${getTagged(hlText, 'TEST_COVERAGE')}</div>
                     `;
 
-                    // 6. Mentor (Loaded Upfront)
-                    const menText = getSection(6, null);
+                    // 6. Mentor
+                    const mnText = getSection(6, null);
                     document.getElementById('w-6').innerHTML = `
                         <div class="sub-btn-container">
                             <button class="sub-btn active" onclick="showSubView('w-6', 'mn-1', this)">Interview Qs</button>
                             <button class="sub-btn" onclick="showSubView('w-6', 'mn-2', this)">System Design</button>
-                            <button class="sub-btn" onclick="showSubView('w-6', 'mn-3', this)">Resume Bullets</button>
-                            <button class="sub-btn" onclick="showSubView('w-6', 'mn-4', this)">Viva Questions</button>
+                            <button class="sub-btn" onclick="showSubView('w-6', 'mn-3', this)">Resume</button>
+                            <button class="sub-btn" onclick="showSubView('w-6', 'mn-4', this)">Viva</button>
                         </div>
-                        <div id="mn-1" class="sub-view active">${getTagged(menText, 'INTERVIEW_QS')}</div>
-                        <div id="mn-2" class="sub-view">${getTagged(menText, 'SYSTEM_DESIGN')}</div>
-                        <div id="mn-3" class="sub-view">${getTagged(menText, 'RESUME_BULLETS')}</div>
-                        <div id="mn-4" class="sub-view">${getTagged(menText, 'VIVA_QS')}</div>
+                        <div id="mn-1" class="sub-view active">${getTagged(mnText, 'INTERVIEW_QS')}</div>
+                        <div id="mn-2" class="sub-view">${getTagged(mnText, 'SYSTEM_DESIGN')}</div>
+                        <div id="mn-3" class="sub-view">${getTagged(mnText, 'RESUME_BULLETS')}</div>
+                        <div id="mn-4" class="sub-view">${getTagged(mnText, 'VIVA_QS')}</div>
                     `;
 
                     clearInterval(interval);
