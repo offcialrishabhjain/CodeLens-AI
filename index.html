@@ -3,65 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CodeLens-AI | Enterprise Audit Dashboard</title>
+    <title>CodeLens-AI | Smart Project Analysis</title>
     <script src="https://sdk.amazonaws.com/js/aws-sdk-2.1610.0.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
     <style>
-        /* UI CORE: Premium 2026 SaaS Theme */
-        :root { --primary: #38bdf8; --accent: #fbbf24; --bg-dark: #0b0f1a; --panel-bg: rgba(30, 41, 59, 0.4); --border: rgba(255,255,255,0.1); }
-        
-        body { font-family: 'Inter', sans-serif; background: radial-gradient(circle at top right, #1e293b, var(--bg-dark)); margin: 0; display: flex; flex-direction: column; height: 100vh; color: #e2e8f0; overflow: hidden; }
-        
-        .nav-bar { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); padding: 15px 40px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); z-index: 100; }
-        .logo { font-size: 1.6rem; font-weight: 800; color: var(--primary); display: flex; align-items: center; gap: 10px; }
-        .header-status { font-size: 0.75rem; color: var(--primary); font-family: 'Fira Code', monospace; letter-spacing: 1px; }
-
+        /* Restoring your Original Font & Style */
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: radial-gradient(circle at top right, #1e293b, #0b0f1a); margin: 0; display: flex; flex-direction: column; height: 100vh; color: #e2e8f0; overflow: hidden; }
+        .nav-bar { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); padding: 15px 40px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); z-index: 10; }
+        .logo { font-size: 1.6rem; font-weight: 800; color: #38bdf8; display: flex; align-items: center; gap: 10px; }
+        .header-accent { color: #fbbf24; }
         .main-layout { display: flex; flex: 1; padding: 25px; gap: 25px; overflow: hidden; }
         
-        /* SIDEBAR */
-        .control-panel { width: 350px; background: var(--panel-bg); backdrop-filter: blur(15px); padding: 25px; border-radius: 24px; border: 1px solid var(--border); display: flex; flex-direction: column; gap: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
-        .sidebar-label { font-size: 0.7rem; font-weight: 800; color: #94a3b8; letter-spacing: 1.5px; text-transform: uppercase; }
-        .sidebar-btn { background: #0f172a; border: 1px solid #334155; color: #f8fafc; padding: 14px; border-radius: 12px; cursor: pointer; text-align: center; font-size: 0.85rem; transition: 0.3s; width: 100%; box-sizing: border-box; }
-        .sidebar-btn:hover { border-color: var(--primary); background: rgba(56, 189, 248, 0.1); }
-        .deploy-btn { background: var(--primary) !important; color: #0f172a !important; font-weight: 800 !important; border: none !important; margin-top: 10px; box-shadow: 0 0 20px rgba(56, 189, 248, 0.3); }
-        .deploy-btn:hover { transform: translateY(-2px); filter: brightness(1.1); }
+        .control-panel { width: 350px; background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(12px); padding: 25px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; gap: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .sidebar-label { font-size: 0.75rem; font-weight: 700; color: #94a3b8; letter-spacing: 1px; text-transform: uppercase; }
+        .sidebar-btn { background: #0f172a; border: 1px solid #334155; color: #f8fafc; padding: 12px; border-radius: 10px; cursor: pointer; text-align: center; font-size: 0.85rem; transition: 0.3s; width: 100%; box-sizing: border-box; }
+        .sidebar-btn:hover { border-color: #38bdf8; background: rgba(56, 189, 248, 0.05); }
+        .deploy-btn { background: #38bdf8 !important; color: #0f172a !important; font-weight: 800 !important; border: none !important; margin-top: 10px; }
 
-        /* DASHBOARD & TABS */
         .dashboard-panel { flex: 1; display: flex; flex-direction: column; gap: 20px; overflow: hidden; }
-        .command-bar { display: flex; gap: 8px; background: rgba(15, 23, 42, 0.6); padding: 10px; border-radius: 18px; border: 1px solid var(--border); }
-        .nav-btn { flex: 1; padding: 12px; border: none; border-radius: 12px; background: transparent; color: #94a3b8; font-weight: 600; cursor: pointer; transition: 0.3s; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; }
-        .nav-btn.active { background: var(--primary); color: #0f172a; box-shadow: 0 0 20px rgba(56, 189, 248, 0.4); font-weight: 800; }
+        .command-bar { display: flex; gap: 10px; background: rgba(15, 23, 42, 0.6); padding: 10px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.05); }
+        .nav-btn { flex: 1; padding: 12px; border: none; border-radius: 10px; background: transparent; color: #94a3b8; font-weight: 600; cursor: pointer; transition: 0.3s; font-size: 0.75rem; text-transform: uppercase; }
+        .nav-btn.active { background: #38bdf8; color: #0f172a; box-shadow: 0 0 15px rgba(56, 189, 248, 0.5); font-weight: 800; }
 
-        .display-panel { flex: 1; background: rgba(0, 0, 0, 0.5); border-radius: 24px; border: 1px solid rgba(16, 185, 129, 0.2); padding: 35px; overflow-y: auto; position: relative; box-shadow: inset 0 0 40px rgba(0,0,0,0.8); }
-        .widget-content { display: none; animation: fadeIn 0.5s ease; white-space: pre-wrap; line-height: 1.8; color: #cbd5e1; }
+        .display-panel { flex: 1; background: rgba(0, 0, 0, 0.6); border-radius: 20px; border: 1px solid rgba(16, 185, 129, 0.3); padding: 30px; overflow-y: auto; font-family: 'Consolas', 'Monaco', monospace; position: relative; }
+        .widget-content { display: none; animation: fadeIn 0.4s ease; white-space: pre-wrap; line-height: 1.7; color: #4ade80; }
         .widget-content.active { display: block; }
 
-        /* SUB-VIEW BUTTON SYSTEM */
-        .sub-btn-container { display: flex; gap: 8px; margin-bottom: 25px; flex-wrap: wrap; border-bottom: 1px solid #334155; padding-bottom: 15px; }
-        .sub-btn { background: rgba(56, 189, 248, 0.05); border: 1px solid var(--primary); color: var(--primary); padding: 8px 14px; border-radius: 8px; font-size: 0.65rem; cursor: pointer; transition: 0.2s; font-weight: 700; text-transform: uppercase; }
-        .sub-btn:hover, .sub-btn.active { background: var(--primary); color: #0f172a; }
-        .sub-view { display: none; color: #e2e8f0; animation: fadeIn 0.3s ease; font-size: 0.95rem; }
+        /* Sub-View Buttons */
+        .sub-btn-container { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; border-bottom: 1px solid #334155; padding-bottom: 15px; }
+        .sub-btn { background: rgba(56, 189, 248, 0.05); border: 1px solid #38bdf8; color: #38bdf8; padding: 8px 12px; border-radius: 8px; font-size: 0.65rem; cursor: pointer; transition: 0.2s; font-weight: bold; text-transform: uppercase; }
+        .sub-btn:hover, .sub-btn.active { background: #38bdf8; color: #0f172a; }
+        .sub-view { display: none; color: #e2e8f0; animation: fadeIn 0.3s ease; font-family: 'Segoe UI', sans-serif; }
         .sub-view.active { display: block; }
 
-        /* TRACE SIMULATOR COMPONENTS */
-        .simulator-instr { background: rgba(251, 191, 36, 0.05); border: 1px solid rgba(251, 191, 36, 0.3); padding: 15px; border-radius: 15px; margin-bottom: 25px; color: var(--accent); font-size: 0.8rem; line-height: 1.5; }
-        .trace-node { margin: 12px 0; position: relative; }
-        .child-container { display: none; margin-left: 38px; padding-left: 18px; border-left: 2px solid #334155; margin-top: 8px; }
-        .node-row { display: flex; gap: 12px; align-items: center; position: relative; }
-        .child-container .trace-node::before { content: ""; position: absolute; left: -20px; top: 24px; width: 18px; height: 2px; background: #334155; }
-        
-        .branch-btn { flex: 1; background: rgba(30, 41, 59, 0.8); border: 1px solid #334155; color: #f1f5f9; padding: 14px 20px; border-radius: 12px; cursor: pointer; text-align: left; font-size: 0.85rem; display: flex; justify-content: space-between; align-items: center; transition: 0.2s; }
-        .branch-btn:hover { border-color: var(--accent); background: rgba(251, 191, 36, 0.1); }
-        .info-btn { background: var(--accent); color: #0f172a; border: none; width: 36px; height: 36px; border-radius: 10px; cursor: pointer; font-weight: 900; flex-shrink: 0; transition: 0.3s; }
-        .info-btn:hover { transform: scale(1.1) rotate(5deg); }
+        /* Simulator */
+        .branch-btn { flex: 1; background: rgba(30, 41, 59, 0.6); border: 1px solid #334155; color: #e2e8f0; padding: 12px 18px; border-radius: 10px; cursor: pointer; text-align: left; font-size: 0.85rem; display: flex; justify-content: space-between; align-items: center; }
+        .info-btn { background: #fbbf24; color: #0f172a; border: none; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; font-weight: 900; }
 
-        /* MODAL SYSTEM */
-        .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); }
-        .modal-content { background: #1e293b; margin: 8% auto; padding: 40px; border: 1px solid var(--accent); width: 550px; border-radius: 28px; box-shadow: 0 0 60px rgba(0,0,0,0.6); position: relative; }
-        .close { position: absolute; top: 20px; right: 25px; color: #94a3b8; font-size: 28px; cursor: pointer; }
-
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-        .loader { border: 3px solid #334155; border-top: 3px solid var(--primary); border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 15px auto; display: none; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .loader { border: 3px solid #334155; border-top: 3px solid #38bdf8; border-radius: 50%; width: 25px; height: 25px; animation: spin 1s linear infinite; margin: 10px auto; display: none; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
@@ -69,33 +48,24 @@
 
     <div class="nav-bar">
         <div class="logo">🔍 CodeLens<span class="header-accent">AI</span></div>
-        <div id="status" class="header-status">SYSTEM_READY</div>
+        <div id="status" style="font-size: 0.75rem; color: #38bdf8; font-family: monospace;">KERNEL_IDLE</div>
     </div>
 
     <div class="main-layout">
         <div class="control-panel">
-            <div class="instruction-box" style="background: rgba(56, 189, 248, 0.05); border: 1px solid rgba(56, 189, 248, 0.3); padding: 18px; border-radius: 16px;">
-                <span style="color: var(--primary); font-weight: 800; font-size: 0.75rem; display: block; margin-bottom: 8px; letter-spacing: 1px;">DEPLOYMENT CENTER</span>
-                <p style="font-size: 0.7rem; color: #94a3b8; margin: 0; line-height: 1.5;">Select a GitHub ZIP repository to begin deep-logic synchronization.</p>
-            </div>
-
             <span class="sidebar-label">Experience Level</span>
             <select id="user-level" class="sidebar-btn">
                 <option value="Beginner">Beginner</option>
                 <option value="Intermediate" selected>Intermediate</option>
                 <option value="Advanced">Advanced</option>
             </select>
-
-            <span class="sidebar-label">Target Archive</span>
+            <span class="sidebar-label">Repository Archive</span>
             <button class="sidebar-btn" onclick="document.getElementById('file-chooser').click()">
-                <span id="file-name-display">Upload Source ZIP</span>
+                <span id="file-name-display">Upload Downloaded ZIP Folder</span>
             </button>
             <input type="file" id="file-chooser" style="display:none" onchange="updateFileName(this)"/>
-
-            <button id="upload-button" class="sidebar-btn deploy-btn">INITIALIZE AUDIT ENGINE</button>
+            <button id="upload-button" class="sidebar-btn deploy-btn">Deploy Audit Engine</button>
             <div id="loader" class="loader"></div>
-            
-            <div style="margin-top: auto; font-size: 0.65rem; color: #64748b; text-align: center;">Powered by CodeLens V2 Neural Engine</div>
         </div>
 
         <div class="dashboard-panel">
@@ -108,10 +78,7 @@
                 <button class="nav-btn" data-target="w-6">Mentor</button>
             </div>
             <div id="result-box" class="display-panel">
-                <div id="placeholder" style="color: var(--primary); text-align: center; margin-top: 15%; font-family: 'Fira Code', monospace; font-size: 0.9rem;">
-                    > AWAITING REPOSITORY UPLOAD...<br>
-                    <span style="color: #475569; font-size: 0.7rem;">Dashboard will synchronize upon analysis completion.</span>
-                </div>
+                <div id="placeholder" style="color: #4ade80; text-align: center; margin-top: 15%;">> WAITING FOR DATA...</div>
                 <div id="w-1" class="widget-content"></div>
                 <div id="w-2" class="widget-content"></div>
                 <div id="w-3" class="widget-content"></div>
@@ -122,29 +89,24 @@
         </div>
     </div>
 
-    <div id="infoModal" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="document.getElementById('infoModal').style.display='none'">&times;</span>
-            <h3 id="modalHeader" style="color:var(--accent); margin-top:0; font-size: 1.4rem;">Logic Detail</h3>
-            <p id="modalText" style="line-height:1.7; color:#cbd5e1; font-size:1rem;"></p>
-        </div>
-    </div>
-
 <script>
-    // AWS CONFIGURATION
-    AWS.config.update({ 
-        accessKeyId: 'AKIA2HEE4M2R5EEP7EUR', 
-        secretAccessKey: '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', 
-        region: 'ap-south-1' 
-    });
+    AWS.config.update({ accessKeyId: 'AKIA2HEE4M2R5EEP7EUR', secretAccessKey: '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', region: 'ap-south-1' });
     const s3 = new AWS.S3();
-    const statusText = document.getElementById('status');
-    const loader = document.getElementById('loader');
+    
+    function clean(text) { return text ? text.replace(/[#*]/g, '').trim() : "No data available."; }
 
-    // UTILITIES
-    function clean(text) { 
-        if(!text) return "No data available.";
-        return text.replace(/[#*]/g, '').replace(/^\s*[-•+]\s+/gm, '').trim(); 
+    // This function is now "Fallback-Enabled"
+    function getTagged(text, tag) {
+        if (!text) return "Content pending...";
+        const marker = `[${tag}]:`;
+        const start = text.indexOf(marker);
+        if (start !== -1) {
+            const contentStart = start + marker.length;
+            const end = text.indexOf("[", contentStart);
+            return clean(text.substring(contentStart, end === -1 ? text.length : end));
+        }
+        // FALLBACK: If the AI didn't use tags, just show the raw section content
+        return clean(text).length > 20 ? clean(text) : "Detailed " + tag + " metrics are being processed...";
     }
 
     window.showSubView = function(widgetId, subId, btn) {
@@ -154,22 +116,6 @@
         btn.classList.add('active');
     };
 
-    window.toggleBranch = function(btn) {
-        const container = btn.parentElement.nextElementSibling;
-        const icon = btn.querySelector('.toggle-icon');
-        const isHidden = container.style.display === 'none' || container.style.display === '';
-        container.style.display = isHidden ? 'block' : 'none';
-        icon.innerText = isHidden ? '[-]' : '[+]';
-        btn.style.borderColor = isHidden ? '#fbbf24' : '#334155';
-    };
-
-    window.showInfo = function(title, text) {
-        document.getElementById('modalHeader').innerText = title;
-        document.getElementById('modalText').innerText = clean(text);
-        document.getElementById('infoModal').style.display = 'block';
-    };
-
-    // NAVIGATION
     document.querySelectorAll('.nav-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
@@ -180,140 +126,62 @@
         });
     });
 
-    function updateFileName(input) { 
-        document.getElementById('file-name-display').innerText = input.files[0] ? input.files[0].name : "Upload Source ZIP"; 
-    }
+    function updateFileName(input) { document.getElementById('file-name-display').innerText = input.files[0] ? input.files[0].name : "Upload ZIP folder"; }
 
-    // UPLOAD LOGIC
     document.getElementById('upload-button').addEventListener('click', function() {
         const file = document.getElementById('file-chooser').files[0];
-        if (!file) { alert("Please select a ZIP folder first."); return; }
-        loader.style.display = "block";
-        statusText.innerText = "STATUS: UPLOADING_REPO";
-        
-        s3.putObject({ 
-            Bucket: 'codelens-uploads-rishabh-2026', 
-            Key: file.name, 
-            ContentType: file.type, 
-            Body: file, 
-            Metadata: { 'user-level': document.getElementById('user-level').value } 
-        }, (err) => {
-            if (err) { statusText.innerText = "STATUS: S3_ERROR"; loader.style.display = "none"; } 
-            else { pollForResults(file.name); }
+        if (!file) return;
+        document.getElementById('loader').style.display = "block";
+        s3.putObject({ Bucket: 'codelens-uploads-rishabh-2026', Key: file.name, Body: file }, (err) => {
+            if (!err) pollForResults(file.name);
         });
     });
 
-    // POLLING & PARSING
     function pollForResults(fileName) {
-        statusText.innerText = "STATUS: ANALYZING_LOGIC";
         const docClient = new AWS.DynamoDB.DocumentClient();
         const interval = setInterval(() => {
             docClient.get({ TableName: "CodeLensResults", Key: { "fileName": fileName } }, (err, data) => {
                 if (data && data.Item) {
                     clearInterval(interval);
-                    loader.style.display = "none";
-                    statusText.innerText = "STATUS: SYNC_COMPLETE";
+                    document.getElementById('loader').style.display = "none";
                     const raw = data.Item.analysis;
 
                     const getSection = (num, nextNum) => {
                         const startMarker = `### ${num}.`;
-                        const endMarker = nextNum ? `### ${nextNum}.` : "[END_OF_ANALYSIS]";
+                        const endMarker = nextNum ? `### ${nextNum}.` : "[END]";
                         const startIdx = raw.indexOf(startMarker);
                         if (startIdx === -1) return "";
-                        const contentStart = raw.indexOf(":", startIdx) + 1;
-                        const endIdx = raw.indexOf(endMarker, contentStart);
-                        return raw.substring(contentStart, endIdx === -1 ? raw.length : endIdx).trim();
+                        const endIdx = raw.indexOf(endMarker, startIdx + 5);
+                        return raw.substring(raw.indexOf(":", startIdx) + 1, endIdx === -1 ? raw.length : endIdx).trim();
                     };
 
-                    const getTagged = (text, tag) => {
-                        const marker = `[${tag}]:`;
-                        const start = text.indexOf(marker);
-                        if (start === -1) return "Detailed metrics are being processed for this category...";
-                        const contentStart = start + marker.length;
-                        const end = text.indexOf("[", contentStart);
-                        return clean(text.substring(contentStart, end === -1 ? text.length : end));
-                    };
-
-                    // 1. Visualizer
-                    document.getElementById('w-1').innerText = clean(getSection(1, 2));
-
-                    // 2. Explanation
-                    const expText = getSection(2, 3);
-                    document.getElementById('w-2').innerHTML = `
-                        <div class="sub-btn-container">
-                            <button class="sub-btn active" onclick="showSubView('w-2', 'exp-1', this)">Overview</button>
-                            <button class="sub-btn" onclick="showSubView('w-2', 'exp-2', this)">Logic Flow</button>
-                            <button class="sub-btn" onclick="showSubView('w-2', 'exp-3', this)">Analogies</button>
-                        </div>
-                        <div id="exp-1" class="sub-view active">${getTagged(expText, 'OVERVIEW')}</div>
-                        <div id="exp-2" class="sub-view">${getTagged(expText, 'LOGIC_AND_CONNECTIVITY')}</div>
-                        <div id="exp-3" class="sub-view">${getTagged(expText, 'REAL_WORLD_ANALOGIES')}</div>`;
-
-                    // 3. Simulator (Efficient Loop)
-                    const traceRaw = getSection(3, 4);
-                    document.getElementById('w-3').innerHTML = `<div class="simulator-instr"><strong>🕹️ Execution Trace:</strong> Explore the project hierarchy. Yellow [?] reveals hidden logic.</div><div id="simulator-root"></div>`;
-                    const simRoot = document.getElementById('simulator-root');
-                    let parents = { 0: simRoot };
-                    traceRaw.split('\n').forEach(line => {
-                        if (!line.trim() || !line.includes('|')) return;
-                        let d = line.startsWith('....') ? 2 : (line.startsWith('..') ? 1 : 0);
-                        const parts = line.replace(/^(\>+| \.+|\.+)/g, '').split('|');
-                        const name = parts[0].trim();
-                        const info = parts[1] ? parts[1].split('EXPLANATION:').pop().trim() : "Internal execution block.";
-                        const node = document.createElement('div');
-                        node.className = "trace-node";
-                        node.innerHTML = `
-                            <div class="node-row">
-                                <button class="branch-btn" onclick="toggleBranch(this)">
-                                    <span>${d===0?'📁':'⚡'} <b>${name}</b></span>
-                                    <span class="toggle-icon">[+]</span>
-                                </button>
-                                <button class="info-btn" onclick="showInfo('${name.replace(/'/g,"\\'")}', '${info.replace(/'/g,"\\'")}')">?</button>
-                            </div>
-                            <div class="child-container"></div>`;
-                        (parents[d] || simRoot).appendChild(node);
-                        parents[d+1] = node.querySelector('.child-container');
-                    });
-
-                    // 4. Optimize
-                    const optText = getSection(4, 5);
-                    document.getElementById('w-4').innerHTML = `
-                        <div class="sub-btn-container">
-                            <button class="sub-btn active" onclick="showSubView('w-4', 'opt-1', this)">Naming</button>
-                            <button class="sub-btn" onclick="showSubView('w-4', 'opt-2', this)">Logic</button>
-                            <button class="sub-btn" onclick="showSubView('w-4', 'opt-3', this)">Security</button>
-                        </div>
-                        <div id="opt-1" class="sub-view active">${getTagged(optText, 'BAD_NAMING')}</div>
-                        <div id="opt-2" class="sub-view">${getTagged(optText, 'DUPLICATE_LOGIC')}</div>
-                        <div id="opt-3" class="sub-view">${getTagged(optText, 'SECURITY_RISKS')}</div>`;
-
-                    // 5. Health
-                    const healthText = getSection(5, 6);
+                    // Health Tab
+                    const hText = getSection(5, 6);
                     document.getElementById('w-5').innerHTML = `
                         <div class="sub-btn-container">
-                            <button class="sub-btn active" onclick="showSubView('w-5', 'h-1', this)">Readability</button>
-                            <button class="sub-btn" onclick="showSubView('w-5', 'h-2', this)">Modularity</button>
-                            <button class="sub-btn" onclick="showSubView('w-5', 'h-3', this)">Security</button>
-                            <button class="sub-btn" onclick="showSubView('w-5', 'h-4', this)">Test Coverage</button>
+                            <button class="sub-btn active" onclick="showSubView('w-5', 'h1', this)">Readability</button>
+                            <button class="sub-btn" onclick="showSubView('w-5', 'h2', this)">Modularity</button>
+                            <button class="sub-btn" onclick="showSubView('w-5', 'h3', this)">Security</button>
+                            <button class="sub-btn" onclick="showSubView('w-5', 'h4', this)">Test Coverage</button>
                         </div>
-                        <div id="h-1" class="sub-view active">${getTagged(healthText, 'READABILITY')}</div>
-                        <div id="h-2" class="sub-view">${getTagged(healthText, 'MODULARITY')}</div>
-                        <div id="h-3" class="sub-view">${getTagged(healthText, 'SECURITY_METRICS')}</div>
-                        <div id="h-4" class="sub-view">${getTagged(healthText, 'TEST_COVERAGE')}</div>`;
+                        <div id="h1" class="sub-view active">${getTagged(hText, 'READABILITY')}</div>
+                        <div id="h2" class="sub-view">${getTagged(hText, 'MODULARITY')}</div>
+                        <div id="h3" class="sub-view">${getTagged(hText, 'SECURITY_METRICS')}</div>
+                        <div id="h4" class="sub-view">${getTagged(hText, 'TEST_COVERAGE')}</div>`;
 
-                    // 6. Mentor
-                    const mentorText = getSection(6, null);
+                    // Mentor Tab
+                    const mText = getSection(6, null);
                     document.getElementById('w-6').innerHTML = `
                         <div class="sub-btn-container">
-                            <button class="sub-btn active" onclick="showSubView('w-6', 'm-1', this)">Interview Qs</button>
-                            <button class="sub-btn" onclick="showSubView('w-6', 'm-2', this)">System Design</button>
-                            <button class="sub-btn" onclick="showSubView('w-6', 'm-3', this)">Resume Bullets</button>
-                            <button class="sub-btn" onclick="showSubView('w-6', 'm-4', this)">Viva Questions</button>
+                            <button class="sub-btn active" onclick="showSubView('w-6', 'm1', this)">Interview Qs</button>
+                            <button class="sub-btn" onclick="showSubView('w-6', 'm2', this)">System Design</button>
+                            <button class="sub-btn" onclick="showSubView('w-6', 'm3', this)">Resume Bullets</button>
+                            <button class="sub-btn" onclick="showSubView('w-6', 'm4', this)">Viva Questions</button>
                         </div>
-                        <div id="m-1" class="sub-view active">${getTagged(mentorText, 'INTERVIEW_QS')}</div>
-                        <div id="m-2" class="sub-view">${getTagged(mentorText, 'SYSTEM_DESIGN')}</div>
-                        <div id="m-3" class="sub-view">${getTagged(mentorText, 'RESUME_BULLETS')}</div>
-                        <div id="m-4" class="sub-view">${getTagged(mentorText, 'VIVA_QUESTIONS')}</div>`;
+                        <div id="m1" class="sub-view active">${getTagged(mText, 'INTERVIEW_QS')}</div>
+                        <div id="m2" class="sub-view">${getTagged(mText, 'SYSTEM_DESIGN')}</div>
+                        <div id="m3" class="sub-view">${getTagged(mText, 'RESUME_BULLETS')}</div>
+                        <div id="m4" class="sub-view">${getTagged(mText, 'VIVA_QUESTIONS')}</div>`;
                 }
             });
         }, 3000);
