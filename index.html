@@ -254,26 +254,62 @@
                         <div id="exp-3" class="sub-view">${getTagged(expText, 'REAL_WORLD_ANALOGIES')}</div>
                     `;
 
-                    // 3. Trace Simulator (Specific dash removal logic)
-                    const traceRaw = getSection(3, 4);
-                    let traceHtml = `<div class="simulator-instr"><strong>🕹️ Simulator:</strong> Click <b>Branches</b> to expand logic paths.</div>`;
-                    traceRaw.split('\n').forEach(line => {
-                        if(!line.trim()) return;
-                        const depth = (line.match(/-/g) || []).length;
-                        const parts = line.replace(/^-+/g, '').split('|'); // Remove only leading dashes
-                        const name = clean(parts[0]);
-                        const info = parts[1] ? parts[1].replace('EXPLANATION:', '').trim() : "Core flow step.";
-                        if(name) {
-                            traceHtml += `<div class="trace-node" style="margin-left: ${depth * 20}px">
-                                <div class="node-row">
-                                    <button class="branch-btn" onclick="toggleBranch(this)"><span>${name}</span> <span class="toggle-icon">[+]</span></button>
-                                    <button class="info-btn" onclick="showInfo('${name}', '${info}')">?</button>
-                                </div>
-                                <div class="child-container"></div>
-                            </div>`;
-                        }
-                    });
-                    document.getElementById('w-3').innerHTML = traceHtml;
+                    
+                   // 3. Trace Simulator (Hierarchical Parsing)
+const traceRaw = getSection(3, 4);
+let traceHtml = `
+    <div class="simulator-instr">
+        <strong>🕹️ Interactive Simulator:</strong><br>
+        1. Click <b>Yellow [?]</b> to see the logic explanation.<br>
+        2. Click the <b>Branch Button</b> to reveal sub-functions and steps.<br>
+        3. Follow the hierarchy to understand the execution flow.
+    </div>
+    <div id="simulator-root"></div>`;
+
+document.getElementById('w-3').innerHTML = traceHtml;
+const simulatorRoot = document.getElementById('simulator-root');
+let currentParents = { 0: simulatorRoot };
+
+traceRaw.split('\n').forEach(line => {
+    if (!line.trim() || !line.includes('|')) return;
+
+    // Determine depth based on markers
+    let depth = 0;
+    if (line.startsWith('....')) depth = 2;
+    else if (line.startsWith('..')) depth = 1;
+    else if (line.startsWith('>>')) depth = 0;
+
+    const cleanLine = line.replace(/^(\>+| \.+|\.+)/g, '').trim();
+    const parts = cleanLine.split('|');
+    const name = parts[0].trim();
+    const info = parts[1] ? parts[1].replace('EXPLANATION:', '').trim() : "Execution step.";
+
+    const nodeHtml = `
+        <div class="trace-node" style="margin-left: ${depth > 0 ? 15 : 0}px">
+            <div class="node-row">
+                <button class="branch-btn" onclick="toggleBranch(this)">
+                    <span>${name}</span> 
+                    <span class="toggle-icon">[+]</span>
+                </button>
+                <button class="info-btn" onclick="showInfo('${name}', '${info}')">?</button>
+            </div>
+            <div class="child-container" style="display:none; margin-left:20px; border-left: 1px solid #334155;"></div>
+        </div>`;
+
+    // Create a temporary element to hold the node
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = nodeHtml;
+    const newNode = tempDiv.firstElementChild;
+
+    // Append to the correct parent based on depth
+    // If depth is 0, append to root. If 1, append to the last 0's child-container, etc.
+    const parentContainer = currentParents[depth] || simulatorRoot;
+    parentContainer.appendChild(newNode);
+    
+    // Store this node's child container as a potential parent for the next depth level
+    currentParents[depth + 1] = newNode.querySelector('.child-container');
+});
+                    
 
                     // 4. Optimization
                     const optText = getSection(4, 5);
