@@ -141,14 +141,22 @@
 
 
 <script>
-    AWS.config.update({ accessKeyId: 'AKIA2HEE4M2R5EEP7EUR', secretAccessKey: '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', region: 'ap-south-1' });
+    AWS.config.update({ 
+        accessKeyId: 'AKIA2HEE4M2R5EEP7EUR', 
+        secretAccessKey: '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', 
+        region: 'ap-south-1' 
+    });
     const s3 = new AWS.S3();
     const statusText = document.getElementById('status');
     const loader = document.getElementById('loader');
 
-
-    function clean(text) { return text.replace(/[#*]/g, '').trim(); }
-
+    // UPDATED CLEAN FUNCTION: Removes #, *, and leading dashes/bullets
+    function clean(text) { 
+        return text
+            .replace(/[#*]/g, '')           // Remove Markdown symbols
+            .replace(/^\s*[-•+]\s+/gm, '')  // Remove leading dashes, bullets, or plus signs from lines
+            .trim(); 
+    }
 
     window.showSubView = function(widgetId, subId, btn) {
         document.querySelectorAll(`#${widgetId} .sub-view`).forEach(v => v.classList.remove('active'));
@@ -157,20 +165,17 @@
         btn.classList.add('active');
     };
 
-
     window.toggleBranch = function(btn) {
         const container = btn.parentElement.nextElementSibling;
         container.style.display = container.style.display === 'block' ? 'none' : 'block';
         btn.querySelector('.toggle-icon').innerText = container.style.display === 'block' ? '[-]' : '[+]';
     };
 
-
     window.showInfo = function(title, text) {
         document.getElementById('modalHeader').innerText = title;
         document.getElementById('modalText').innerText = clean(text);
         document.getElementById('infoModal').style.display = 'block';
     };
-
 
     document.querySelectorAll('.nav-btn').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -182,9 +187,9 @@
         });
     });
 
-
-    function updateFileName(input) { document.getElementById('file-name-display').innerText = input.files[0] ? input.files[0].name : "Upload ZIP folder"; }
-
+    function updateFileName(input) { 
+        document.getElementById('file-name-display').innerText = input.files[0] ? input.files[0].name : "Upload ZIP folder"; 
+    }
 
     document.getElementById('upload-button').addEventListener('click', function() {
         const file = document.getElementById('file-chooser').files[0];
@@ -192,12 +197,17 @@
         if (!file) { alert("Please select a ZIP folder first."); return; }
         loader.style.display = "block";
         statusText.innerText = "STATUS: INITIALIZING_AUDIT";
-        s3.putObject({ Bucket: 'codelens-uploads-rishabh-2026', Key: file.name, ContentType: file.type, Body: file, Metadata: { 'user-level': level } }, (err) => {
+        s3.putObject({ 
+            Bucket: 'codelens-uploads-rishabh-2026', 
+            Key: file.name, 
+            ContentType: file.type, 
+            Body: file, 
+            Metadata: { 'user-level': level } 
+        }, (err) => {
             if (err) { statusText.innerText = "STATUS: ERROR"; loader.style.display = "none"; } 
             else { pollForResults(file.name); }
         });
     });
-
 
     function pollForResults(fileName) {
         const docClient = new AWS.DynamoDB.DocumentClient();
@@ -207,7 +217,6 @@
                     loader.style.display = "none";
                     statusText.innerText = "STATUS: ANALYSIS_SYNCED";
                     const raw = data.Item.analysis;
-
 
                     const getSection = (num, nextNum) => {
                         const startMarker = `### ${num}.`;
@@ -219,20 +228,18 @@
                         return raw.substring(contentStart, endIdx === -1 ? raw.length : endIdx).trim();
                     };
 
-
                     const getTagged = (text, tag) => {
                         const marker = `[${tag}]:`;
                         const start = text.indexOf(marker);
                         if (start === -1) return "Rich content is being populated...";
                         const contentStart = start + marker.length;
                         const end = text.indexOf("[", contentStart);
-                        return clean(text.substring(contentStart, end === -1 ? text.length : end));
+                        let content = text.substring(contentStart, end === -1 ? text.length : end);
+                        return clean(content); // Clean now removes leading dashes
                     };
 
-
-                    // 1. Flowchart Visualizer
-                    document.getElementById('w-1').innerText = clean(getSection(1, 2)).replace(/\|—/g, ' └─');
-
+                    // 1. Visualizer (Keep tree symbols, remove others)
+                    document.getElementById('w-1').innerText = getSection(1, 2).replace(/[#*]/g, '').trim();
 
                     // 2. Explanation
                     const expText = getSection(2, 3);
@@ -247,13 +254,13 @@
                         <div id="exp-3" class="sub-view">${getTagged(expText, 'REAL_WORLD_ANALOGIES')}</div>
                     `;
 
-
-                    // 3. Trace Simulator
+                    // 3. Trace Simulator (Specific dash removal logic)
                     const traceRaw = getSection(3, 4);
-                    let traceHtml = `<div class="simulator-instr"><strong>🕹️ Simulator:</strong> Click <b>Branches</b> to expand logic paths. Click <b>Yellow [?]</b> for detail.</div>`;
+                    let traceHtml = `<div class="simulator-instr"><strong>🕹️ Simulator:</strong> Click <b>Branches</b> to expand logic paths.</div>`;
                     traceRaw.split('\n').forEach(line => {
+                        if(!line.trim()) return;
                         const depth = (line.match(/-/g) || []).length;
-                        const parts = line.replace(/-/g, '').split('|');
+                        const parts = line.replace(/^-+/g, '').split('|'); // Remove only leading dashes
                         const name = clean(parts[0]);
                         const info = parts[1] ? parts[1].replace('EXPLANATION:', '').trim() : "Core flow step.";
                         if(name) {
@@ -268,7 +275,6 @@
                     });
                     document.getElementById('w-3').innerHTML = traceHtml;
 
-
                     // 4. Optimization
                     const optText = getSection(4, 5);
                     document.getElementById('w-4').innerHTML = `
@@ -282,11 +288,8 @@
                         <div id="opt-3" class="sub-view">${getTagged(optText, 'SECURITY_RISKS')}</div>
                     `;
 
-
                     // 5. Health
-                    const hlText = getSection(5, 6);
-                    document.getElementById('w-5').innerHTML = `<div class="sub-view active">${clean(hlText)}</div>`;
-
+                    document.getElementById('w-5').innerHTML = `<div class="sub-view active">${clean(getSection(5, 6))}</div>`;
 
                     // 6. Mentor
                     const mnText = getSection(6, null);
@@ -298,7 +301,6 @@
                         <div id="mn-1" class="sub-view active">${getTagged(mnText, 'INTERVIEW_QS')}</div>
                         <div id="mn-2" class="sub-view">${getTagged(mnText, 'RESUME_BULLETS')}</div>
                     `;
-
 
                     clearInterval(interval);
                 }
