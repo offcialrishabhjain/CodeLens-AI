@@ -40,15 +40,55 @@
         .sub-view { display: none; color: #e2e8f0; animation: fadeIn 0.3s ease; }
         .sub-view.active { display: block; }
 
-        /* Trace Simulator UI */
+        /* --- UPDATED TRACE SIMULATOR UI --- */
         .simulator-instr { background: rgba(251, 191, 36, 0.05); border: 1px solid rgba(251, 191, 36, 0.3); padding: 15px; border-radius: 12px; margin-bottom: 20px; color: #fbbf24; font-size: 0.8rem; line-height: 1.4; }
-        .trace-node { margin: 8px 0; border-left: 1px dashed #334155; padding-left: 10px; }
-        .node-row { display: flex; gap: 10px; align-items: center; }
-        .branch-btn { flex: 1; background: #1e293b; border: 1px solid #334155; color: #e2e8f0; padding: 10px 15px; border-radius: 8px; cursor: pointer; text-align: left; font-size: 0.85rem; display: flex; justify-content: space-between; align-items: center; }
-        .branch-btn:hover { border-color: #fbbf24; background: #2d3748; }
-        .info-btn { background: #fbbf24; color: #0f172a; border: none; width: 30px; height: 30px; border-radius: 6px; cursor: pointer; font-weight: 900; transition: 0.2s; flex-shrink: 0; }
+        
+        .trace-node { margin: 10px 0; position: relative; }
+        
+        .child-container { 
+            display: none; 
+            margin-left: 35px; 
+            padding-left: 15px;
+            border-left: 2px solid #334155; 
+            margin-top: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .node-row { display: flex; gap: 10px; align-items: center; position: relative; }
+
+        /* Visual "L" connector for child nodes */
+        .child-container .trace-node::before {
+            content: "";
+            position: absolute;
+            left: -17px;
+            top: 22px;
+            width: 15px;
+            height: 2px;
+            background: #334155;
+        }
+
+        .branch-btn { 
+            flex: 1; 
+            background: rgba(30, 41, 59, 0.6); 
+            border: 1px solid #334155; 
+            color: #e2e8f0; 
+            padding: 12px 18px; 
+            border-radius: 10px; 
+            cursor: pointer; 
+            text-align: left; 
+            font-size: 0.85rem; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            transition: 0.2s;
+        }
+        
+        .child-container .branch-btn { background: rgba(15, 23, 42, 0.4); font-size: 0.8rem; }
+        .branch-btn:hover { border-color: #fbbf24; background: rgba(251, 191, 36, 0.1); }
+        
+        .info-btn { background: #fbbf24; color: #0f172a; border: none; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; font-weight: 900; transition: 0.2s; flex-shrink: 0; }
         .info-btn:hover { transform: scale(1.1); background: #fcd34d; }
-        .child-container { display: none; margin-top: 5px; }
+        /* ---------------------------------- */
 
         /* Modal */
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); }
@@ -148,10 +188,9 @@
         btn.classList.add('active');
     };
 
-    // Correct toggleBranch placement
     window.toggleBranch = function(btn) {
         const nodeRow = btn.parentElement;
-        const container = nodeRow.nextElementSibling; // The .child-container
+        const container = nodeRow.nextElementSibling;
         const icon = btn.querySelector('.toggle-icon');
         
         if (container.style.display === 'none' || container.style.display === '') {
@@ -246,18 +285,16 @@
                         <div id="exp-3" class="sub-view">${getTagged(expText, 'REAL_WORLD_ANALOGIES')}</div>
                     `;
 
-                    // 3. Trace Simulator (Hierarchical Parsing Logic)
+                    // --- UPDATED TRACE SIMULATOR JS ---
                     const traceRaw = getSection(3, 4);
-                    let traceHtml = `
+                    document.getElementById('w-3').innerHTML = `
                         <div class="simulator-instr">
                             <strong>🕹️ Interactive Simulator:</strong><br>
                             1. Click <b>Yellow [?]</b> to see the logic explanation.<br>
-                            2. Click the <b>Branch Button</b> to reveal sub-functions and steps.<br>
-                            3. Follow the hierarchy to understand the execution flow.
+                            2. Click the <b>Branch Button</b> to reveal sub-functions and steps.
                         </div>
                         <div id="simulator-root"></div>`;
 
-                    document.getElementById('w-3').innerHTML = traceHtml;
                     const simulatorRoot = document.getElementById('simulator-root');
                     let currentParents = { 0: simulatorRoot };
 
@@ -272,16 +309,19 @@
                         const cleanLine = line.replace(/^(\>+| \.+|\.+)/g, '').trim();
                         const parts = cleanLine.split('|');
                         const name = parts[0].trim();
-                        const info = parts[1] ? parts[1].replace('EXPLANATION:', '').trim() : "Execution step.";
+                        // Aggressive cleaning to capture only the explanation
+                        const info = parts[1] ? parts[1].split('EXPLANATION:').pop().trim() : "Execution step within " + name;
 
                         const nodeHtml = `
                             <div class="trace-node">
                                 <div class="node-row">
                                     <button class="branch-btn" onclick="toggleBranch(this)">
-                                        <span>${name}</span> 
+                                        <span style="display:flex; align-items:center; gap:8px;">
+                                            ${depth === 0 ? '📁' : '⚡'} <b>${name}</b>
+                                        </span> 
                                         <span class="toggle-icon">[+]</span>
                                     </button>
-                                    <button class="info-btn" onclick="showInfo('${name}', '${info}')">?</button>
+                                    <button class="info-btn" title="View Details" onclick="showInfo('${name.replace(/'/g, "\\'")}', '${info.replace(/'/g, "\\'")}')">?</button>
                                 </div>
                                 <div class="child-container"></div>
                             </div>`;
@@ -294,6 +334,7 @@
                         parentContainer.appendChild(newNode);
                         currentParents[depth + 1] = newNode.querySelector('.child-container');
                     });
+                    // ----------------------------------
 
                     const optText = getSection(4, 5);
                     document.getElementById('w-4').innerHTML = `
