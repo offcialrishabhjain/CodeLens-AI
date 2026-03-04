@@ -21,7 +21,9 @@
         .deploy-btn { background: #38bdf8 !important; color: #0f172a !important; font-weight: 800 !important; border: none !important; margin-top: 10px; }
         .deploy-btn:hover { background: #7dd3fc !important; transform: translateY(-2px); }
 
+
         .processing-notice { background: rgba(56, 189, 248, 0.05); border: 1px solid rgba(56, 189, 248, 0.3); padding: 15px; border-radius: 12px; font-size: 0.75rem; color: #94a3b8; line-height: 1.5; margin-top: auto; }
+
 
         /* Dashboard Styles */
         .dashboard-panel { flex: 1; display: flex; flex-direction: column; gap: 20px; overflow: hidden; }
@@ -29,9 +31,11 @@
         .nav-btn { flex: 1; padding: 12px; border: none; border-radius: 10px; background: transparent; color: #94a3b8; font-weight: 600; cursor: pointer; transition: 0.3s; font-size: 0.75rem; text-transform: uppercase; }
         .nav-btn.active { background: #38bdf8; color: #0f172a; box-shadow: 0 0 15px rgba(56, 189, 248, 0.5); font-weight: 800; }
 
+
         .display-panel { flex: 1; background: rgba(0, 0, 0, 0.6); border-radius: 20px; border: 1px solid rgba(16, 185, 129, 0.3); padding: 30px; overflow-y: auto; font-family: 'Fira Code', monospace; position: relative; box-shadow: inset 0 0 30px rgba(0,0,0,1); }
         .widget-content { display: none; animation: fadeIn 0.4s ease; white-space: pre-wrap; line-height: 1.7; color: #4ade80; }
         .widget-content.active { display: block; }
+
 
         /* Sub-View Styling */
         .sub-btn-container { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; border-bottom: 1px solid #334155; padding-bottom: 15px; }
@@ -39,6 +43,7 @@
         .sub-btn:hover, .sub-btn.active { background: #38bdf8; color: #0f172a; }
         .sub-view { display: none; color: #e2e8f0; animation: fadeIn 0.3s ease; }
         .sub-view.active { display: block; }
+
 
         /* Trace Simulator UI */
         .simulator-instr { background: rgba(251, 191, 36, 0.05); border: 1px solid rgba(251, 191, 36, 0.3); padding: 15px; border-radius: 12px; margin-bottom: 20px; color: #fbbf24; font-size: 0.8rem; line-height: 1.4; }
@@ -50,10 +55,12 @@
         .info-btn:hover { transform: scale(1.1); background: #fcd34d; }
         .child-container { display: none; margin-top: 5px; }
 
+
         /* Modal */
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); }
         .modal-content { background: #1e293b; margin: 10% auto; padding: 30px; border: 1px solid #fbbf24; width: 500px; border-radius: 20px; box-shadow: 0 0 40px rgba(0,0,0,0.5); position: relative; }
         .close { position: absolute; top: 15px; right: 20px; color: #94a3b8; font-size: 24px; cursor: pointer; }
+
 
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
         .loader { border: 3px solid #334155; border-top: 3px solid #38bdf8; border-radius: 50%; width: 25px; height: 25px; animation: spin 1s linear infinite; margin: 10px auto; display: none; }
@@ -62,10 +69,12 @@
 </head>
 <body>
 
+
     <div class="nav-bar">
         <div class="logo">🔍 CodeLens<span class="header-accent">AI</span></div>
         <div id="status" style="font-size: 0.75rem; color: #38bdf8; font-family: monospace; letter-spacing: 1px;">KERNEL_IDLE</div>
     </div>
+
 
     <div class="main-layout">
         <div class="control-panel">
@@ -74,6 +83,7 @@
                 <p style="font-size: 0.7rem; color: #94a3b8; margin: 0; line-height: 1.4;">Upload a GitHub ZIP (Code > Download ZIP).</p>
             </div>
 
+
             <span class="sidebar-label">Experience Level</span>
             <select id="user-level" class="sidebar-btn">
                 <option value="Beginner">Beginner</option>
@@ -81,19 +91,23 @@
                 <option value="Advanced">Advanced</option>
             </select>
 
+
             <span class="sidebar-label">Repository Archive</span>
             <button class="sidebar-btn" onclick="document.getElementById('file-chooser').click()">
                 <span id="file-name-display">Upload Downloaded ZIP Folder</span>
             </button>
             <input type="file" id="file-chooser" style="display:none" onchange="updateFileName(this)"/>
 
+
             <button id="upload-button" class="sidebar-btn deploy-btn">Deploy Audit Engine</button>
             <div id="loader" class="loader" style="display: none;"></div>
+
 
             <div class="processing-notice">
                 ✨ <b>Audit Progress:</b> Building a comprehensive multi-layer execution trace and logic audit may take <b>60 to 90 seconds</b>.
             </div>
         </div>
+
 
         <div class="dashboard-panel">
             <div class="command-bar">
@@ -116,6 +130,7 @@
         </div>
     </div>
 
+
     <div id="infoModal" class="modal">
         <div class="modal-content">
             <span class="close" onclick="document.getElementById('infoModal').style.display='none'">&times;</span>
@@ -124,23 +139,16 @@
         </div>
     </div>
 
+
 <script>
-    AWS.config.update({ 
-        accessKeyId: 'AKIA2HEE4M2R5EEP7EUR', 
-        secretAccessKey: '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', 
-        region: 'ap-south-1' 
-    });
+    AWS.config.update({ accessKeyId: 'AKIA2HEE4M2R5EEP7EUR', secretAccessKey: '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', region: 'ap-south-1' });
     const s3 = new AWS.S3();
     const statusText = document.getElementById('status');
     const loader = document.getElementById('loader');
 
-    // UPDATED CLEAN FUNCTION: Removes #, *, and leading dashes/bullets
-    function clean(text) { 
-        return text
-            .replace(/[#*]/g, '')           // Remove Markdown symbols
-            .replace(/^\s*[-•+]\s+/gm, '')  // Remove leading dashes, bullets, or plus signs from lines
-            .trim(); 
-    }
+
+    function clean(text) { return text.replace(/[#*]/g, '').trim(); }
+
 
     window.showSubView = function(widgetId, subId, btn) {
         document.querySelectorAll(`#${widgetId} .sub-view`).forEach(v => v.classList.remove('active'));
@@ -149,17 +157,20 @@
         btn.classList.add('active');
     };
 
+
     window.toggleBranch = function(btn) {
         const container = btn.parentElement.nextElementSibling;
         container.style.display = container.style.display === 'block' ? 'none' : 'block';
         btn.querySelector('.toggle-icon').innerText = container.style.display === 'block' ? '[-]' : '[+]';
     };
 
+
     window.showInfo = function(title, text) {
         document.getElementById('modalHeader').innerText = title;
         document.getElementById('modalText').innerText = clean(text);
         document.getElementById('infoModal').style.display = 'block';
     };
+
 
     document.querySelectorAll('.nav-btn').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -171,9 +182,9 @@
         });
     });
 
-    function updateFileName(input) { 
-        document.getElementById('file-name-display').innerText = input.files[0] ? input.files[0].name : "Upload ZIP folder"; 
-    }
+
+    function updateFileName(input) { document.getElementById('file-name-display').innerText = input.files[0] ? input.files[0].name : "Upload ZIP folder"; }
+
 
     document.getElementById('upload-button').addEventListener('click', function() {
         const file = document.getElementById('file-chooser').files[0];
@@ -181,17 +192,12 @@
         if (!file) { alert("Please select a ZIP folder first."); return; }
         loader.style.display = "block";
         statusText.innerText = "STATUS: INITIALIZING_AUDIT";
-        s3.putObject({ 
-            Bucket: 'codelens-uploads-rishabh-2026', 
-            Key: file.name, 
-            ContentType: file.type, 
-            Body: file, 
-            Metadata: { 'user-level': level } 
-        }, (err) => {
+        s3.putObject({ Bucket: 'codelens-uploads-rishabh-2026', Key: file.name, ContentType: file.type, Body: file, Metadata: { 'user-level': level } }, (err) => {
             if (err) { statusText.innerText = "STATUS: ERROR"; loader.style.display = "none"; } 
             else { pollForResults(file.name); }
         });
     });
+
 
     function pollForResults(fileName) {
         const docClient = new AWS.DynamoDB.DocumentClient();
@@ -201,6 +207,7 @@
                     loader.style.display = "none";
                     statusText.innerText = "STATUS: ANALYSIS_SYNCED";
                     const raw = data.Item.analysis;
+
 
                     const getSection = (num, nextNum) => {
                         const startMarker = `### ${num}.`;
@@ -212,18 +219,20 @@
                         return raw.substring(contentStart, endIdx === -1 ? raw.length : endIdx).trim();
                     };
 
+
                     const getTagged = (text, tag) => {
                         const marker = `[${tag}]:`;
                         const start = text.indexOf(marker);
                         if (start === -1) return "Rich content is being populated...";
                         const contentStart = start + marker.length;
                         const end = text.indexOf("[", contentStart);
-                        let content = text.substring(contentStart, end === -1 ? text.length : end);
-                        return clean(content); // Clean now removes leading dashes
+                        return clean(text.substring(contentStart, end === -1 ? text.length : end));
                     };
 
-                    // 1. Visualizer (Keep tree symbols, remove others)
-                    document.getElementById('w-1').innerText = getSection(1, 2).replace(/[#*]/g, '').trim();
+
+                    // 1. Flowchart Visualizer
+                    document.getElementById('w-1').innerText = clean(getSection(1, 2)).replace(/\|—/g, ' └─');
+
 
                     // 2. Explanation
                     const expText = getSection(2, 3);
@@ -238,13 +247,13 @@
                         <div id="exp-3" class="sub-view">${getTagged(expText, 'REAL_WORLD_ANALOGIES')}</div>
                     `;
 
-                    // 3. Trace Simulator (Specific dash removal logic)
+
+                    // 3. Trace Simulator
                     const traceRaw = getSection(3, 4);
-                    let traceHtml = `<div class="simulator-instr"><strong>🕹️ Simulator:</strong> Click <b>Branches</b> to expand logic paths.</div>`;
+                    let traceHtml = `<div class="simulator-instr"><strong>🕹️ Simulator:</strong> Click <b>Branches</b> to expand logic paths. Click <b>Yellow [?]</b> for detail.</div>`;
                     traceRaw.split('\n').forEach(line => {
-                        if(!line.trim()) return;
                         const depth = (line.match(/-/g) || []).length;
-                        const parts = line.replace(/^-+/g, '').split('|'); // Remove only leading dashes
+                        const parts = line.replace(/-/g, '').split('|');
                         const name = clean(parts[0]);
                         const info = parts[1] ? parts[1].replace('EXPLANATION:', '').trim() : "Core flow step.";
                         if(name) {
@@ -259,6 +268,7 @@
                     });
                     document.getElementById('w-3').innerHTML = traceHtml;
 
+
                     // 4. Optimization
                     const optText = getSection(4, 5);
                     document.getElementById('w-4').innerHTML = `
@@ -272,8 +282,11 @@
                         <div id="opt-3" class="sub-view">${getTagged(optText, 'SECURITY_RISKS')}</div>
                     `;
 
+
                     // 5. Health
-                    document.getElementById('w-5').innerHTML = `<div class="sub-view active">${clean(getSection(5, 6))}</div>`;
+                    const hlText = getSection(5, 6);
+                    document.getElementById('w-5').innerHTML = `<div class="sub-view active">${clean(hlText)}</div>`;
+
 
                     // 6. Mentor
                     const mnText = getSection(6, null);
@@ -285,6 +298,7 @@
                         <div id="mn-1" class="sub-view active">${getTagged(mnText, 'INTERVIEW_QS')}</div>
                         <div id="mn-2" class="sub-view">${getTagged(mnText, 'RESUME_BULLETS')}</div>
                     `;
+
 
                     clearInterval(interval);
                 }
