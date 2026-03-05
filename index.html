@@ -73,10 +73,10 @@
     </div>
 
     <div class="main-layout">
-         <div class="control-panel">
+        <div class="control-panel">
             <div class="instruction-box" style="background: rgba(56, 189, 248, 0.05); border: 1px solid rgba(56, 189, 248, 0.3); padding: 15px; border-radius: 12px;">
-                <span style="color: #38bdf8; font-weight: bold; font-size: 0.8rem; display: block; margin-bottom: 5px;">📦 PROJECT SOURCE</span>
-                <p style="font-size: 0.7rem; color: #94a3b8; margin: 0; line-height: 1.4;">Upload a ZIP or provide a GitHub repository link.</p>
+                <span style="color: #38bdf8; font-weight: bold; font-size: 0.8rem; display: block; margin-bottom: 5px;">📦 GITHUB UPLOAD</span>
+                <p style="font-size: 0.7rem; color: #94a3b8; margin: 0; line-height: 1.4;">Upload ZIP from GitHub (Code > Download ZIP).</p>
             </div>
 
             <span class="sidebar-label">Experience Level</span>
@@ -86,24 +86,11 @@
                 <option value="Advanced">Advanced</option>
             </select>
 
-            <span class="sidebar-label">Source Type</span>
-            <div style="display: flex; gap: 5px; margin-bottom: 10px;">
-                <button class="sub-btn active" id="btn-zip" onclick="setSource('zip')" style="flex:1">ZIP File</button>
-                <button class="sub-btn" id="btn-repo" onclick="setSource('repo')" style="flex:1">GitHub Link</button>
-            </div>
-
-            <div id="input-zip">
-                <span class="sidebar-label">Repository Archive</span>
-                <button class="sidebar-btn" onclick="document.getElementById('file-chooser').click()">
-                    <span id="file-name-display">Upload ZIP Folder</span>
-                </button>
-                <input type="file" id="file-chooser" style="display:none" onchange="updateFileName(this)"/>
-            </div>
-
-            <div id="input-repo" style="display:none;">
-                <span class="sidebar-label">GitHub URL</span>
-                <input type="text" id="repo-url" class="sidebar-btn" style="text-align: left;" placeholder="https://github.com/user/repo">
-            </div>
+            <span class="sidebar-label">Repository Archive</span>
+            <button class="sidebar-btn" onclick="document.getElementById('file-chooser').click()">
+                <span id="file-name-display">Upload ZIP Folder</span>
+            </button>
+            <input type="file" id="file-chooser" style="display:none" onchange="updateFileName(this)"/>
 
             <button id="upload-button" class="sidebar-btn deploy-btn">Deploy Audit Engine</button>
             <div id="loader" class="loader"></div>
@@ -143,16 +130,6 @@
     </div>
 
 <script>
-    let currentSource = 'zip';
-
-window.setSource = function(mode) {
-    currentSource = mode;
-    document.getElementById('input-zip').style.display = mode === 'zip' ? 'block' : 'none';
-    document.getElementById('input-repo').style.display = mode === 'repo' ? 'block' : 'none';
-    document.getElementById('btn-zip').classList.toggle('active', mode === 'zip');
-    document.getElementById('btn-repo').classList.toggle('active', mode === 'repo');
-};
-    
     /* --- AWS INITIALIZATION --- */
     AWS.config.update({ accessKeyId: 'AKIA2HEE4M2R5EEP7EUR', secretAccessKey: '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', region: 'ap-south-1' });
     const s3 = new AWS.S3();
@@ -163,8 +140,8 @@ window.setSource = function(mode) {
     function clean(text) { return text.replace(/[#*]/g, '').trim(); }
 
     window.showSubView = function(widgetId, subId, btn) {
-        document.querySelectorAll(`#${widgetId} .sub-view`).forEach(v => v.classList.remove('active'));
-        document.querySelectorAll(`#${widgetId} .sub-btn`).forEach(b => b.classList.remove('active'));
+        document.querySelectorAll(#${widgetId} .sub-view).forEach(v => v.classList.remove('active'));
+        document.querySelectorAll(#${widgetId} .sub-btn).forEach(b => b.classList.remove('active'));
         document.getElementById(subId).classList.add('active');
         btn.classList.add('active');
     };
@@ -195,47 +172,14 @@ window.setSource = function(mode) {
     function updateFileName(input) { document.getElementById('file-name-display').innerText = input.files[0].name; }
 
     /* --- UPLOAD & POLL --- */
-   document.getElementById('upload-button').addEventListener('click', function() {
-    const level = document.getElementById('user-level').value;
-    const timestampId = "audit_" + Date.now(); // Unique ID for polling
-    
-    loader.style.display = "block";
-    statusText.innerText = "STATUS: INITIALIZING";
-
-    if (currentSource === 'zip') {
+    document.getElementById('upload-button').addEventListener('click', function() {
         const file = document.getElementById('file-chooser').files[0];
-        if (!file) {
-            loader.style.display = "none";
-            return alert("Please select a ZIP file first.");
-        }
-        statusText.innerText = "STATUS: UPLOADING ZIP";
-        s3.putObject({ 
-            Bucket: 'codelens-uploads-rishabh-2026', 
-            Key: timestampId + ".zip", 
-            ContentType: file.type, 
-            Body: file, 
-            Metadata: { 'user-level': level } 
-        }, () => pollForResults(timestampId + ".zip"));
-        
-    } else {
-        const url = document.getElementById('repo-url').value;
-        if (!url || !url.includes('github.com')) {
-            loader.style.display = "none";
-            return alert("Please enter a valid GitHub Repository URL.");
-        }
-        statusText.innerText = "STATUS: SENDING REPO LINK";
-        
-        // We send a small JSON file to S3. The Lambda will see the .json extension 
-        // and know it needs to download from GitHub instead of unzipping.
-        const triggerData = JSON.stringify({ repo_url: url, level: level });
-        s3.putObject({ 
-            Bucket: 'codelens-uploads-rishabh-2026', 
-            Key: timestampId + ".json", 
-            ContentType: 'application/json', 
-            Body: triggerData
-        }, () => pollForResults(timestampId + ".json"));
-    }
-});
+        const level = document.getElementById('user-level').value;
+        if (!file) return alert("Select ZIP first.");
+        loader.style.display = "block";
+        statusText.innerText = "STATUS: UPLOADING";
+        s3.putObject({ Bucket: 'codelens-uploads-rishabh-2026', Key: file.name, ContentType: file.type, Body: file, Metadata: { 'user-level': level } }, () => pollForResults(file.name));
+    });
 
     function pollForResults(fileName) {
         const docClient = new AWS.DynamoDB.DocumentClient();
@@ -247,13 +191,13 @@ window.setSource = function(mode) {
                     const raw = data.Item.analysis;
 
                     const getSection = (n, m) => {
-                        const s = raw.indexOf(`### ${n}.`);
-                        const e = m ? raw.indexOf(`### ${m}.`) : raw.indexOf("[END_OF_ANALYSIS]");
+                        const s = raw.indexOf(### ${n}.);
+                        const e = m ? raw.indexOf(### ${m}.) : raw.indexOf("[END_OF_ANALYSIS]");
                         return s === -1 ? "" : raw.substring(raw.indexOf(":", s) + 1, e === -1 ? raw.length : e).trim();
                     };
 
                     const getTagged = (t, g) => {
-                        const s = t.indexOf(`[${g}]:`);
+                        const s = t.indexOf([${g}]:);
                         if (s === -1) return "Content Finalizing...";
                         const cs = s + g.length + 3;
                         const e = t.indexOf("[", cs);
@@ -280,7 +224,7 @@ window.setSource = function(mode) {
                     // 3. Simulator Tree 
 const traceRaw = getSection(3, 4);
 const simRoot = document.getElementById('w-3');
-simRoot.innerHTML = `<div class="simulator-instr"><strong>🕹️ Simulator:</strong> Deep-tracing project architecture.</div><div id="sim-tree-container"></div>`;
+simRoot.innerHTML = <div class="simulator-instr"><strong>🕹️ Simulator:</strong> Deep-tracing project architecture.</div><div id="sim-tree-container"></div>;
 
 const treeContainer = document.getElementById('sim-tree-container');
 let lastNodes = { 0: treeContainer }; 
