@@ -73,10 +73,10 @@
     </div>
 
     <div class="main-layout">
-        <div class="control-panel">
+         <div class="control-panel">
             <div class="instruction-box" style="background: rgba(56, 189, 248, 0.05); border: 1px solid rgba(56, 189, 248, 0.3); padding: 15px; border-radius: 12px;">
-                <span style="color: #38bdf8; font-weight: bold; font-size: 0.8rem; display: block; margin-bottom: 5px;">📦 GITHUB UPLOAD</span>
-                <p style="font-size: 0.7rem; color: #94a3b8; margin: 0; line-height: 1.4;">Upload ZIP from GitHub (Code > Download ZIP).</p>
+                <span style="color: #38bdf8; font-weight: bold; font-size: 0.8rem; display: block; margin-bottom: 5px;">📦 PROJECT SOURCE</span>
+                <p style="font-size: 0.7rem; color: #94a3b8; margin: 0; line-height: 1.4;">Upload a ZIP or provide a GitHub repository link.</p>
             </div>
 
             <span class="sidebar-label">Experience Level</span>
@@ -87,23 +87,27 @@
             </select>
 
             <span class="sidebar-label">Source Type</span>
-<div style="display: flex; gap: 5px; margin-bottom: 10px;">
-    <button class="sub-btn active" id="btn-zip" onclick="setSource('zip')" style="flex:1">ZIP File</button>
-    <button class="sub-btn" id="btn-repo" onclick="setSource('repo')" style="flex:1">GitHub Link</button>
-</div>
+            <div style="display: flex; gap: 5px; margin-bottom: 10px;">
+                <button class="sub-btn active" id="btn-zip" onclick="setSource('zip')" style="flex:1">ZIP File</button>
+                <button class="sub-btn" id="btn-repo" onclick="setSource('repo')" style="flex:1">GitHub Link</button>
+            </div>
 
-<div id="input-zip">
-    <span class="sidebar-label">Repository Archive</span>
-    <button class="sidebar-btn" onclick="document.getElementById('file-chooser').click()">
-        <span id="file-name-display">Upload ZIP Folder</span>
-    </button>
-    <input type="file" id="file-chooser" style="display:none" onchange="updateFileName(this)"/>
-</div>
+            <div id="input-zip">
+                <span class="sidebar-label">Repository Archive</span>
+                <button class="sidebar-btn" onclick="document.getElementById('file-chooser').click()">
+                    <span id="file-name-display">Upload ZIP Folder</span>
+                </button>
+                <input type="file" id="file-chooser" style="display:none" onchange="updateFileName(this)"/>
+            </div>
 
-<div id="input-repo" style="display:none;">
-    <span class="sidebar-label">GitHub URL</span>
-    <input type="text" id="repo-url" class="sidebar-btn" style="text-align: left;" placeholder="https://github.com/user/repo">
-</div>
+            <div id="input-repo" style="display:none;">
+                <span class="sidebar-label">GitHub URL</span>
+                <input type="text" id="repo-url" class="sidebar-btn" style="text-align: left;" placeholder="https://github.com/user/repo">
+            </div>
+
+            <button id="upload-button" class="sidebar-btn deploy-btn">Deploy Audit Engine</button>
+            <div id="loader" class="loader"></div>
+
             <div class="processing-notice">
                 ✨ <b>Audit Progress:</b> Building a comprehensive multi-layer analysis may take <b>60 to 90 seconds</b> to ensure complete architectural accuracy.
             </div>
