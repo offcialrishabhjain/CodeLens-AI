@@ -17,46 +17,58 @@
         
         /* Sidebar Glass Controls */
         .control-panel { width: 350px; background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(12px); padding: 25px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; gap: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        
         .sidebar-label { font-size: 0.75rem; font-weight: 700; color: #94a3b8; letter-spacing: 1px; text-transform: uppercase; }
         .sidebar-btn { background: #0f172a; border: 1px solid #334155; color: #f8fafc; padding: 12px; border-radius: 10px; cursor: pointer; text-align: center; font-size: 0.85rem; transition: 0.3s; width: 100%; box-sizing: border-box; outline: none; }
         .sidebar-btn:hover { border-color: #38bdf8; background: rgba(56, 189, 248, 0.05); }
+        
         .deploy-btn { background: #38bdf8 !important; color: #0f172a !important; font-weight: 800 !important; border: none !important; margin-top: 10px; }
+        .deploy-btn:hover { background: #7dd3fc !important; transform: translateY(-2px); }
 
-        /* Command Bar */
+        .processing-notice { background: rgba(56, 189, 248, 0.05); border: 1px solid rgba(56, 189, 248, 0.3); padding: 15px; border-radius: 12px; font-size: 0.75rem; color: #94a3b8; line-height: 1.5; margin-top: auto; }
+
+        /* Dashboard Command Center */
         .dashboard-panel { flex: 1; display: flex; flex-direction: column; gap: 20px; overflow: hidden; }
         .command-bar { display: flex; gap: 10px; background: rgba(15, 23, 42, 0.6); padding: 10px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.05); }
         .nav-btn { flex: 1; padding: 12px; border: none; border-radius: 10px; background: transparent; color: #94a3b8; font-weight: 600; cursor: pointer; transition: 0.3s; font-size: 0.75rem; text-transform: uppercase; }
         .nav-btn.active { background: #38bdf8; color: #0f172a; box-shadow: 0 0 15px rgba(56, 189, 248, 0.5); font-weight: 800; }
+        
         .doubt-nav-btn { border: 1px solid rgba(251, 191, 36, 0.3) !important; color: #fbbf24 !important; }
 
-        /* Display Port */
+        /* Main Display Panel */
         .display-panel { flex: 1; background: rgba(0, 0, 0, 0.6); border-radius: 20px; border: 1px solid rgba(16, 185, 129, 0.3); padding: 30px; overflow-y: auto; font-family: 'Fira Code', monospace; position: relative; box-shadow: inset 0 0 30px rgba(0,0,0,1); }
-        .widget-content { display: none; } /* HIDDEN BY DEFAULT */
-        .widget-content.active { display: flex; flex-direction: column; animation: fadeIn 0.4s ease; }
+        
+        /* FIX: Ensure widget-content controls all visibility */
+        .widget-content { display: none; height: 100%; flex-direction: column; }
+        .widget-content.active { display: flex; animation: fadeIn 0.4s ease; white-space: pre-wrap; line-height: 1.7; color: #4ade80; }
 
-        /* Doubts Chat Layout */
-        .chat-history { flex: 1; overflow-y: auto; padding: 20px; background: rgba(0,0,0,0.2); border-radius: 15px; border: 1px solid #334155; margin-bottom: 15px; display: flex; flex-direction: column; gap: 15px; min-height: 400px; }
-        .chat-bubble { max-width: 85%; padding: 12px 18px; border-radius: 15px; font-size: 0.9rem; line-height: 1.5; }
+        /* --- CHAT SECTION STYLES --- */
+        .chat-wrapper { flex: 1; display: flex; flex-direction: column; height: 100%; }
+        .chat-history { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; background: rgba(0,0,0,0.2); border-radius: 15px; border: 1px solid #334155; margin-bottom: 15px; font-family: 'Inter', sans-serif; }
+        .chat-bubble { max-width: 80%; padding: 12px 18px; border-radius: 15px; font-size: 0.9rem; line-height: 1.5; color: #e2e8f0; white-space: normal; }
         .user-bubble { align-self: flex-end; background: #38bdf8; color: #0f172a; border-bottom-right-radius: 2px; }
         .ai-bubble { align-self: flex-start; background: #1e293b; color: #e2e8f0; border: 1px solid #334155; border-bottom-left-radius: 2px; }
-        .chat-input-row { display: flex; gap: 10px; padding-top: 5px; }
-        .chat-field { flex: 1; background: #0f172a; border: 1px solid #334155; border-radius: 10px; color: white; padding: 12px; outline: none; }
-        .chat-send-btn { background: #fbbf24; color: #0f172a; border: none; padding: 0 25px; border-radius: 10px; font-weight: 800; cursor: pointer; }
+        .chat-input-row { display: flex; gap: 10px; margin-top: auto; }
+        .chat-input-field { flex: 1; background: #0f172a; border: 1px solid #334155; border-radius: 10px; color: white; padding: 12px; outline: none; }
+        .chat-input-field:focus { border-color: #fbbf24; }
+        .chat-send-btn { background: #fbbf24; color: #0f172a; border: none; padding: 0 25px; border-radius: 10px; font-weight: 800; cursor: pointer; transition: 0.2s; }
 
-        /* Existing Styles Preserved */
+        /* Hierarchy & Interactive Nodes Preserved */
         .sub-btn-container { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; border-bottom: 1px solid #334155; padding-bottom: 15px; }
         .sub-btn { background: rgba(56, 189, 248, 0.1); border: 1px solid #38bdf8; color: #38bdf8; padding: 8px 15px; border-radius: 8px; font-size: 0.7rem; cursor: pointer; transition: 0.2s; font-weight: bold; text-transform: uppercase; }
-        .sub-btn.active { background: #38bdf8; color: #0f172a; }
-        .sub-view { display: none; color: #e2e8f0; }
+        .sub-btn:hover, .sub-btn.active { background: #38bdf8; color: #0f172a; }
+        .sub-view { display: none; color: #e2e8f0; animation: fadeIn 0.3s ease; }
         .sub-view.active { display: block; }
         .trace-node { margin: 10px 0; position: relative; }
         .child-container { display: none; margin-left: 35px; padding-left: 15px; border-left: 2px solid #334155; margin-top: 5px; }
+        .node-row { display: flex; gap: 10px; align-items: center; }
         .branch-btn { flex: 1; background: rgba(30, 41, 59, 0.6); border: 1px solid #334155; color: #e2e8f0; padding: 12px 18px; border-radius: 10px; cursor: pointer; text-align: left; font-size: 0.85rem; }
         .info-btn { background: #fbbf24; color: #0f172a; border: none; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; font-weight: 900; }
-        
+
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); }
         .modal-content { background: #1e293b; margin: 10% auto; padding: 30px; border: 1px solid #fbbf24; width: 500px; border-radius: 20px; position: relative; }
         .close { position: absolute; top: 15px; right: 20px; color: #94a3b8; font-size: 24px; cursor: pointer; }
+
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
         .loader { border: 3px solid #334155; border-top: 3px solid #38bdf8; border-radius: 50%; width: 25px; height: 25px; animation: spin 1s linear infinite; margin: 10px auto; display: none; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -71,17 +83,18 @@
 
     <div class="main-layout">
         <div class="control-panel">
-            <div class="instruction-box" style="background: rgba(56, 189, 248, 0.05); border: 1px solid #38bdf8; padding: 15px; border-radius: 12px;">
-                <span style="color: #38bdf8; font-weight: bold; font-size: 0.8rem;">📦 GITHUB UPLOAD</span>
-                <p style="font-size: 0.7rem; color: #94a3b8; margin: 0; line-height: 1.4;">Upload ZIP from GitHub (Code > Download ZIP).</p>
+            <div class="instruction-box" style="background: rgba(56, 189, 248, 0.05); border: 1px solid rgba(56, 189, 248, 0.3); padding: 15px; border-radius: 12px;">
+                <span style="color: #38bdf8; font-weight: bold; font-size: 0.8rem; display: block; margin-bottom: 5px;">📦 GITHUB UPLOAD</span>
+                <p style="font-size: 0.7rem; color: #94a3b8; margin: 0; line-height: 1.4;">Upload ZIP (Code > Download ZIP).</p>
             </div>
-            <span class="sidebar-label">Level</span>
+            <span class="sidebar-label">Experience Level</span>
             <select id="user-level" class="sidebar-btn"><option value="Beginner">Beginner</option><option value="Intermediate" selected>Intermediate</option><option value="Advanced">Advanced</option></select>
-            <span class="sidebar-label">Project</span>
+            <span class="sidebar-label">Repository Archive</span>
             <button class="sidebar-btn" onclick="document.getElementById('file-chooser').click()"><span id="file-name-display">Upload ZIP Folder</span></button>
             <input type="file" id="file-chooser" style="display:none" onchange="updateFileName(this)"/>
             <button id="upload-button" class="sidebar-btn deploy-btn">Deploy Audit Engine</button>
             <div id="loader" class="loader"></div>
+            <div class="processing-notice">✨ <b>Audit Progress:</b> Architectural analysis typically takes <b>60 to 90 seconds</b>.</div>
         </div>
 
         <div class="dashboard-panel">
@@ -105,14 +118,16 @@
                 <div id="w-6" class="widget-content"></div>
 
                 <div id="w-doubts" class="widget-content">
-                    <div id="chat-history" class="chat-history">
-                        <div id="chat-placeholder" style="color: #94a3b8; text-align: center; margin-top: 15%; font-style: italic;">
-                            > PLEASE SCAN A PROJECT TO ENABLE CONTEXTUAL CHAT.
+                    <div class="chat-wrapper">
+                        <div id="chat-history" class="chat-history">
+                            <div id="chat-placeholder" style="color: #94a3b8; text-align: center; margin-top: 20%; font-style: italic;">
+                                > PLEASE SCAN A PROJECT TO ENABLE DOUBTS CONTEXT.
+                            </div>
                         </div>
-                    </div>
-                    <div class="chat-input-row">
-                        <input type="text" id="chat-query" class="chat-field" placeholder="Ask AI about project logic...">
-                        <button id="send-doubt" class="chat-send-btn">ASK AI</button>
+                        <div class="chat-input-row">
+                            <input type="text" id="chat-query" class="chat-input-field" placeholder="Ask a question about the code...">
+                            <button id="send-doubt" class="chat-send-btn">ASK AI</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -149,7 +164,7 @@
             const data = JSON.parse(response.Payload);
             const answer = JSON.parse(data.body).answer;
             addBubble('ai', answer);
-        } catch (e) { addBubble('ai', "Kernel Error: AI logic unreachable."); }
+        } catch (e) { addBubble('ai', "Kernel Error: Ensure your Lambda is configured for Chat mode."); }
     });
 
     function addBubble(role, text) {
@@ -161,31 +176,7 @@
         container.scrollTop = container.scrollHeight;
     }
 
-    /* --- NAVIGATION --- */
-    document.querySelectorAll('.nav-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-            document.querySelectorAll('.widget-content').forEach(w => w.classList.remove('active'));
-            btn.classList.add('active');
-            document.getElementById('placeholder').style.display = 'none';
-            document.getElementById(btn.getAttribute('data-target')).classList.add('active');
-        });
-    });
-
-    /* --- AUDIT SCANNING --- */
-    function updateFileName(input) { document.getElementById('file-name-display').innerText = input.files[0].name; }
-
-    document.getElementById('upload-button').addEventListener('click', function() {
-        const file = document.getElementById('file-chooser').files[0];
-        const level = document.getElementById('user-level').value;
-        if (!file) return alert("Select ZIP first.");
-        currentFileName = file.name;
-        loader.style.display = "block";
-        statusText.innerText = "STATUS: UPLOADING";
-        document.getElementById('chat-history').innerHTML = '<div id="chat-placeholder" style="color: #94a3b8; text-align: center; margin-top: 15%; font-style: italic;">> SCANNING PROJECT CONTEXT...</div>';
-        s3.putObject({ Bucket: 'codelens-uploads-rishabh-2026', Key: file.name, ContentType: file.type, Body: file, Metadata: { 'user-level': level } }, () => pollForResults(file.name));
-    });
-
+    /* --- RECURSIVE TREE & POLL LOGIC PRESERVED --- */
     function pollForResults(fileName) {
         const docClient = new AWS.DynamoDB.DocumentClient();
         const interval = setInterval(() => {
@@ -193,9 +184,11 @@
                 if (data && data.Item) {
                     loader.style.display = "none";
                     statusText.innerText = "STATUS: SYNCED";
-                    document.getElementById('chat-history').innerHTML = '<div class="chat-bubble ai-bubble">Kernel sync complete. Project context indexed. What doubts can I clarify?</div>';
-                    
                     const raw = data.Item.analysis;
+                    
+                    // Doubts Welcome Message
+                    document.getElementById('chat-history').innerHTML = '<div class="chat-bubble ai-bubble">Kernel sync complete. I have indexed your code context. What doubts can I clarify?</div>';
+
                     const getSection = (n, m) => {
                         const s = raw.indexOf(`### ${n}.`);
                         const e = m ? raw.indexOf(`### ${m}.`) : raw.indexOf("[END_OF_ANALYSIS]");
@@ -211,29 +204,75 @@
                     };
 
                     document.getElementById('w-1').innerText = clean(getSection(1, 2)).replace(/\|—/g, ' └─');
-                    
-                    // ... distribution logic for 2, 3, 4, 5, 6 remains untouched
-                    
+                    const exp = getSection(2, 3);
+                    document.getElementById('w-2').innerHTML = `<div class="sub-btn-container"><button class="sub-btn active" onclick="showSubView('w-2', 'e1', this)">Overview</button><button class="sub-btn" onclick="showSubView('w-2', 'e2', this)">Logic</button><button class="sub-btn" onclick="showSubView('w-2', 'e3', this)">Analogies</button></div><div id="e1" class="sub-view active">${getTagged(exp, 'OVERVIEW')}</div><div id="e2" class="sub-view">${getTagged(exp, 'LOGIC_AND_CONNECTIVITY')}</div><div id="e3" class="sub-view">${getTagged(exp, 'REAL_WORLD_ANALOGIES')}</div>`;
+
+                    const traceRaw = getSection(3, 4);
+                    let traceHtml = `<div class="simulator-instr"><strong>🕹️ Simulator:</strong> Deep-tracing project architecture.</div><div id="sim-tree-container"></div>`;
+                    document.getElementById('w-3').innerHTML = traceHtml;
+                    const treeContainer = document.getElementById('sim-tree-container');
+                    let lastNodes = { 0: treeContainer };
+                    traceRaw.split('\n').filter(l => l.includes('|')).forEach(line => {
+                        let depth = line.trim().startsWith('....') ? 2 : line.trim().startsWith('..') ? 1 : line.trim().startsWith('>>') ? 0 : -1;
+                        if (depth === -1) return;
+                        const [namePart, infoPart] = line.replace(/^[\s.>]+/, '').split('|');
+                        const name = namePart ? namePart.trim() : "Node";
+                        const info = infoPart ? infoPart.split('EXPLANATION:').pop().trim() : "Logic step.";
+                        const node = document.createElement('div');
+                        node.className = "trace-node";
+                        node.innerHTML = `<div class="node-row"><button class="branch-btn" onclick="toggleBranch(this)"><span>⚡ ${name}</span> <span class="toggle-icon">[+]</span></button><button class="info-btn" onclick="showInfo('${name}', '${info}')">?</button></div><div class="child-container"></div>`;
+                        let parent = depth === 0 ? treeContainer : (lastNodes[depth - 1] ? lastNodes[depth - 1].querySelector('.child-container') : treeContainer);
+                        parent.appendChild(node);
+                        lastNodes[depth] = node;
+                    });
+
+                    const opt = getSection(4, 5);
+                    document.getElementById('w-4').innerHTML = `<div class="sub-btn-container"><button class="sub-btn active" onclick="showSubView('w-4', 'o1', this)">Naming</button><button class="sub-btn" onclick="showSubView('w-4', 'o2', this)">Logic</button><button class="sub-btn" onclick="showSubView('w-4', 'o3', this)">Security</button></div><div id="o1" class="sub-view active">${getTagged(opt, 'BAD_NAMING')}</div><div id="o2" class="sub-view">${getTagged(opt, 'DUPLICATE_LOGIC')}</div><div id="o3" class="sub-view">${getTagged(opt, 'SECURITY_RISKS')}</div>`;
+                    const hl = getSection(5, 6);
+                    document.getElementById('w-5').innerHTML = `<div class="sub-btn-container"><button class="sub-btn active" onclick="showSubView('w-5', 'h1', this)">Readability</button><button class="sub-btn" onclick="showSubView('w-5', 'h2', this)">Security</button></div><div id="h1" class="sub-view active">${getTagged(hl, 'READABILITY')}</div><div id="h2" class="sub-view">${getTagged(hl, 'SECURITY')}</div>`;
+                    const mn = getSection(6, null);
+                    document.getElementById('w-6').innerHTML = `<div class="sub-btn-container"><button class="sub-btn active" onclick="showSubView('w-6', 'm1', this)">Interview</button><button class="sub-btn" onclick="showSubView('w-6', 'm2', this)">Resume</button></div><div id="m1" class="sub-view active">${getTagged(mn, 'INTERVIEW_QS')}</div><div id="m2" class="sub-view">${getTagged(mn, 'RESUME_BULLETS')}</div>`;
+
                     clearInterval(interval);
                 }
             });
         }, 3000);
     }
 
-    /* --- TREE SIMULATOR (Preserved) --- */
+    /* --- UI NAVIGATION --- */
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.widget-content').forEach(w => w.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById('placeholder').style.display = 'none';
+            document.getElementById(btn.getAttribute('data-target')).classList.add('active');
+        });
+    });
+
+    document.getElementById('upload-button').addEventListener('click', function() {
+        const file = document.getElementById('file-chooser').files[0];
+        const level = document.getElementById('user-level').value;
+        if (!file) return alert("Select ZIP first.");
+        currentFileName = file.name;
+        loader.style.display = "block";
+        statusText.innerText = "STATUS: UPLOADING";
+        document.getElementById('chat-history').innerHTML = '<div id="chat-placeholder" style="color: #94a3b8; text-align: center; margin-top: 20%; font-style: italic;">> SCANNING PROJECT CONTEXT...</div>';
+        s3.putObject({ Bucket: 'codelens-uploads-rishabh-2026', Key: file.name, ContentType: file.type, Body: file, Metadata: { 'user-level': level } }, () => pollForResults(file.name));
+    });
+
+    function updateFileName(input) { document.getElementById('file-name-display').innerText = input.files[0].name; }
     window.toggleBranch = function(btn) {
         const container = btn.parentElement.nextElementSibling;
         const isVisible = container.style.display === 'block';
         container.style.display = isVisible ? 'none' : 'block';
-        btn.innerHTML = btn.innerHTML.includes('[+]') ? btn.innerHTML.replace('[+]', '[-]') : btn.innerHTML.replace('[-]', '[+]');
+        btn.querySelector('.toggle-icon').innerText = isVisible ? '[+]' : '[-]';
     };
-
     window.showInfo = function(title, text) {
         document.getElementById('modalHeader').innerText = title;
         document.getElementById('modalText').innerText = clean(text);
         document.getElementById('infoModal').style.display = 'block';
     };
-
     window.showSubView = function(widgetId, subId, btn) {
         document.querySelectorAll(`#${widgetId} .sub-view`).forEach(v => v.classList.remove('active'));
         document.querySelectorAll(`#${widgetId} .sub-btn`).forEach(b => b.classList.remove('active'));
