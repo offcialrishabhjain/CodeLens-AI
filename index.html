@@ -33,7 +33,6 @@
         .nav-btn { flex: 1; padding: 12px; border: none; border-radius: 10px; background: transparent; color: #94a3b8; font-weight: 600; cursor: pointer; transition: 0.3s; font-size: 0.75rem; text-transform: uppercase; }
         .nav-btn.active { background: #38bdf8; color: #0f172a; box-shadow: 0 0 15px rgba(56, 189, 248, 0.5); font-weight: 800; }
         
-        /* New Doubt Section Accent */
         .doubt-nav-btn { border: 1px solid rgba(251, 191, 36, 0.3) !important; color: #fbbf24 !important; }
 
         /* Main Display Panel */
@@ -51,9 +50,8 @@
         .chat-input-field { flex: 1; background: #0f172a; border: 1px solid #334155; border-radius: 10px; color: white; padding: 12px; outline: none; }
         .chat-input-field:focus { border-color: #fbbf24; }
         .chat-send-btn { background: #fbbf24; color: #0f172a; border: none; padding: 0 25px; border-radius: 10px; font-weight: 800; cursor: pointer; transition: 0.2s; }
-        .chat-send-btn:hover { background: #fcd34d; transform: scale(1.05); }
 
-        /* Existing Components Styling */
+        /* Hierarchy & Interactive Nodes */
         .sub-btn-container { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; border-bottom: 1px solid #334155; padding-bottom: 15px; }
         .sub-btn { background: rgba(56, 189, 248, 0.1); border: 1px solid #38bdf8; color: #38bdf8; padding: 8px 15px; border-radius: 8px; font-size: 0.7rem; cursor: pointer; transition: 0.2s; font-weight: bold; text-transform: uppercase; }
         .sub-btn:hover, .sub-btn.active { background: #38bdf8; color: #0f172a; }
@@ -66,7 +64,7 @@
         .info-btn { background: #fbbf24; color: #0f172a; border: none; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; font-weight: 900; }
 
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); }
-        .modal-content { background: #1e293b; margin: 10% auto; padding: 30px; border: 1px solid #fbbf24; width: 500px; border-radius: 20px; box-shadow: 0 0 40px rgba(0,0,0,0.5); position: relative; }
+        .modal-content { background: #1e293b; margin: 10% auto; padding: 30px; border: 1px solid #fbbf24; width: 500px; border-radius: 20px; position: relative; }
         .close { position: absolute; top: 15px; right: 20px; color: #94a3b8; font-size: 24px; cursor: pointer; }
 
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
@@ -94,7 +92,7 @@
             <input type="file" id="file-chooser" style="display:none" onchange="updateFileName(this)"/>
             <button id="upload-button" class="sidebar-btn deploy-btn">Deploy Audit Engine</button>
             <div id="loader" class="loader"></div>
-            <div class="processing-notice">✨ <b>Audit Progress:</b> Building a comprehensive logic audit may take <b>60 to 90 seconds</b>.</div>
+            <div class="processing-notice">✨ <b>Audit Progress:</b> Architectural analysis typically takes <b>60 to 90 seconds</b>.</div>
         </div>
 
         <div class="dashboard-panel">
@@ -118,7 +116,9 @@
 
                 <div id="w-doubts" class="widget-content chat-wrapper">
                     <div id="chat-history" class="chat-history">
-                        <div class="chat-bubble ai-bubble">Audit complete. I have indexed your project. Ask me any doubt about the logic or code.</div>
+                        <div id="chat-placeholder" style="color: #94a3b8; text-align: center; margin-top: 20%; font-style: italic;">
+                            > PLEASE SCAN A PROJECT TO ENABLE DOUBTS CONTEXT.
+                        </div>
                     </div>
                     <div class="chat-input-row">
                         <input type="text" id="chat-query" class="chat-input-field" placeholder="Ask a question about the code...">
@@ -145,13 +145,22 @@
     document.getElementById('send-doubt').addEventListener('click', async () => {
         const input = document.getElementById('chat-query');
         const question = input.value.trim();
-        if (!question || !currentFileName) return;
+        
+        if (!currentFileName) {
+            alert("Please scan a project first to provide the AI with context.");
+            return;
+        }
+        if (!question) return;
+
+        // Remove placeholder on first message
+        const placeholder = document.getElementById('chat-placeholder');
+        if (placeholder) placeholder.remove();
 
         addBubble('user', question);
         input.value = "";
 
         const params = {
-            FunctionName: 'CodeLensAnalyzer', // Match your AWS Lambda Name
+            FunctionName: 'CodeLensAnalyzer', 
             Payload: JSON.stringify({ question: question, fileName: currentFileName })
         };
 
@@ -161,7 +170,7 @@
             const answer = JSON.parse(data.body).answer;
             addBubble('ai', answer);
         } catch (e) {
-            addBubble('ai', "Kernel Error: Ensure the project is scanned before asking doubts.");
+            addBubble('ai', "Kernel Error: Ensure your Lambda is configured for Chat mode.");
         }
     });
 
@@ -174,7 +183,7 @@
         container.scrollTop = container.scrollHeight;
     }
 
-    /* --- EXISTING RECURSIVE TREE & INTERACTIVE LOGIC --- */
+    /* --- EXISTING UI HELPERS --- */
     window.showSubView = function(widgetId, subId, btn) {
         document.querySelectorAll(`#${widgetId} .sub-view`).forEach(v => v.classList.remove('active'));
         document.querySelectorAll(`#${widgetId} .sub-btn`).forEach(b => b.classList.remove('active'));
@@ -207,13 +216,18 @@
 
     function updateFileName(input) { document.getElementById('file-name-display').innerText = input.files[0].name; }
 
+    /* --- UPLOAD & POLL --- */
     document.getElementById('upload-button').addEventListener('click', function() {
         const file = document.getElementById('file-chooser').files[0];
         const level = document.getElementById('user-level').value;
-        if (!file) return alert("Select ZIP");
+        if (!file) return alert("Select ZIP first.");
         currentFileName = file.name;
         loader.style.display = "block";
         statusText.innerText = "STATUS: UPLOADING";
+        
+        // Reset Chat UI for new scan
+        document.getElementById('chat-history').innerHTML = '<div id="chat-placeholder" style="color: #94a3b8; text-align: center; margin-top: 20%; font-style: italic;">> PLEASE SCAN A PROJECT TO ENABLE DOUBTS CONTEXT.</div>';
+
         s3.putObject({ Bucket: 'codelens-uploads-rishabh-2026', Key: file.name, ContentType: file.type, Body: file, Metadata: { 'user-level': level } }, () => pollForResults(file.name));
     });
 
@@ -226,6 +240,11 @@
                     statusText.innerText = "STATUS: SYNCED";
                     const raw = data.Item.analysis;
                     
+                    // Welcome message in Doubts once scan is complete
+                    const chatHistory = document.getElementById('chat-history');
+                    chatHistory.innerHTML = '<div class="chat-bubble ai-bubble">Kernel sync complete. I have indexed your code context. What doubts can I clarify?</div>';
+
+                    // Slicing logic for widgets...
                     const getSection = (n, m) => {
                         const s = raw.indexOf(`### ${n}.`);
                         const e = m ? raw.indexOf(`### ${m}.`) : raw.indexOf("[END_OF_ANALYSIS]");
@@ -240,7 +259,6 @@
                         return clean(t.substring(cs, e === -1 ? t.length : e));
                     };
 
-                    // Re-populating existing widgets 1-6 
                     document.getElementById('w-1').innerText = clean(getSection(1, 2)).replace(/\|—/g, ' └─');
                     
                     const exp = getSection(2, 3);
