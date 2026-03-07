@@ -345,6 +345,36 @@
             border-top: 1px solid var(--border);
         }
 
+        /* ── AUDIT BANNER ── */
+        .audit-banner {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            background: var(--crimson);
+            border-bottom: 1px solid var(--red-accent);
+            padding: 9px 24px;
+            flex-shrink: 0;
+        }
+        .audit-tag {
+            font-family: var(--mono);
+            font-size: 0.62rem;
+            letter-spacing: 2px;
+            color: rgba(255,255,255,0.55);
+            white-space: nowrap;
+            border-right: 1px solid rgba(255,255,255,0.2);
+            padding-right: 16px;
+        }
+        .audit-text {
+            font-family: var(--mono);
+            font-size: 0.68rem;
+            letter-spacing: 0.5px;
+            color: rgba(255,255,255,0.85);
+        }
+        .audit-text strong {
+            color: var(--white);
+            font-weight: 700;
+        }
+
         /* ── DASHBOARD ── */
         .dashboard {
             flex: 1;
@@ -793,6 +823,12 @@
         </div>
     </div>
 
+    <!-- ── AUDIT NOTICE BANNER ── -->
+    <div class="audit-banner">
+        <span class="audit-tag">[ AUDIT NOTICE ]</span>
+        <span class="audit-text">Analysis may take <strong>60–90 seconds</strong> to ensure complete architectural accuracy.</span>
+    </div>
+
     <div class="main">
 
         <!-- ── SIDEBAR ── -->
@@ -846,12 +882,8 @@
             </div>
 
             <!-- LOADER -->
-            <div class="sidebar-section">
+            <div class="sidebar-section" style="padding: 20px;">
                 <div id="loader-bar" class="loader-bar"></div>
-                <div class="processing-note">
-                    [ AUDIT NOTICE ]<br>
-                    Analysis may take 60–90 seconds to ensure complete architectural accuracy.
-                </div>
             </div>
 
         </div>
