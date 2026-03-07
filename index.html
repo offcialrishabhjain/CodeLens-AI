@@ -345,6 +345,31 @@
             border-top: 1px solid var(--border);
         }
 
+        /* ── TEAM NAME ── */
+        .topbar-team {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 0 20px;
+            border-left: 1px solid var(--border-mid);
+        }
+        .team-by {
+            font-family: var(--mono);
+            font-size: 0.55rem;
+            letter-spacing: 2px;
+            color: var(--beige-dim);
+            text-transform: uppercase;
+        }
+        .team-name {
+            font-family: var(--mono);
+            font-size: 0.72rem;
+            letter-spacing: 1px;
+            color: var(--beige);
+            background: rgba(139,26,26,0.25);
+            border: 1px solid rgba(139,26,26,0.5);
+            padding: 3px 10px;
+        }
+
         /* ── AUDIT BANNER ── */
         .audit-banner {
             display: flex;
@@ -820,6 +845,10 @@
         <div class="topbar-status">
             <div class="status-dot" id="status-dot"></div>
             <span id="status-label">IDLE</span>
+        </div>
+        <div class="topbar-team">
+            <span class="team-by">BY</span>
+            <span class="team-name">Code &amp; Co.</span>
         </div>
     </div>
 
