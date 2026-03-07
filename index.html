@@ -61,6 +61,12 @@
         .fill-low  { background: linear-gradient(90deg, #ef4444, #f87171); }
         .rich-content { color: #cbd5e1; font-family: 'Inter', sans-serif; font-size: 0.85rem; line-height: 1.8; white-space: pre-wrap; }
 
+        /* ── TRUNCATION BANNER ── */
+        .truncation-banner { background: rgba(251,191,36,0.08); border: 1px solid rgba(251,191,36,0.4); border-radius: 10px; padding: 10px 14px; font-size: 0.75rem; color: #fbbf24; line-height: 1.5; margin-bottom: 16px; display: none; font-family: 'Inter', sans-serif; }
+
+        /* ── PARSE ERROR ── */
+        .parse-error { background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.3); border-radius: 10px; padding: 12px 16px; font-size: 0.8rem; color: #f87171; font-family: 'Inter', sans-serif; line-height: 1.6; }
+
         /* ── CHAT ── */
         #w-7 { white-space: normal; }
         .chat-outer { display: flex; flex-direction: column; height: 100%; gap: 12px; }
@@ -125,7 +131,7 @@
             <!-- ── ZIP UPLOAD ── -->
             <div style="background: rgba(56, 189, 248, 0.05); border: 1px solid rgba(56, 189, 248, 0.3); padding: 14px; border-radius: 14px; display: flex; flex-direction: column; gap: 10px;">
                 <span style="color: #38bdf8; font-weight: 700; font-size: 0.75rem;">📦 ZIP UPLOAD</span>
-                <p style="font-size: 0.7rem; color: #94a3b8; margin: 0; line-height: 1.4;">Upload ZIP from GitHub (Code › Download ZIP).</p>
+                <p style="font-size: 0.7rem; color: #94a3b8; margin: 0; line-height: 1.4;">Upload ZIP from GitHub (Code › Download ZIP). Max 50 MB.</p>
                 <button class="sidebar-btn" onclick="document.getElementById('file-chooser').click()">
                     <span id="file-name-display">Choose ZIP File</span>
                 </button>
@@ -210,14 +216,16 @@
     const statusText = document.getElementById('status');
     const loader     = document.getElementById('loader');
 
-    const LAMBDA_ANALYSIS = 'codelens-upload-validator';   // existing analysis Lambda
-    const LAMBDA_GITHUB   = 'codelens-github-fetcher';     // new GitHub fetcher Lambda
+    const LAMBDA_ANALYSIS  = 'codelens-upload-validator';
+    const LAMBDA_GITHUB    = 'codelens-github-fetcher';
+    const MAX_ZIP_BYTES    = 50 * 1024 * 1024;   // 50 MB
+    const CHAT_HISTORY_MAX = 6;                   // turns sent to backend (single source of truth)
 
     let currentFileName = "";
     let chatHistory     = [];
 
     /* ── UI HELPERS ── */
-    function clean(text) { return text.replace(/[#*]/g, '').trim(); }
+    function clean(text) { return (text || '').replace(/[#*]/g, '').trim(); }
 
     function setLoading(on) {
         loader.style.display = on ? 'block' : 'none';
@@ -267,14 +275,18 @@
         if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); askDoubt(); }
     });
 
+    /* ── UNIQUE ID HELPER ── */
+    function generateUid() {
+        return Math.random().toString(36).slice(2, 10);
+    }
+
     /* ════════════════════════════════════
        GITHUB ANALYSE
        ════════════════════════════════════ */
     async function analyseFromGitHub() {
-        const urlInput  = document.getElementById('github-url-input');
-        const statusBadge = document.getElementById('github-status');
-        const repoUrl   = urlInput.value.trim();
-        const level     = document.getElementById('user-level').value;
+        const urlInput    = document.getElementById('github-url-input');
+        const repoUrl     = urlInput.value.trim();
+        const level       = document.getElementById('user-level').value;
 
         if (!repoUrl) {
             showGithubStatus('error', '⚠️ Please paste a GitHub URL first.');
@@ -324,22 +336,35 @@
     }
 
     /* ════════════════════════════════════
-       ZIP UPLOAD
+       ZIP UPLOAD  (with 50 MB size guard)
        ════════════════════════════════════ */
     document.getElementById('upload-button').addEventListener('click', function() {
         const file  = document.getElementById('file-chooser').files[0];
         const level = document.getElementById('user-level').value;
-        if (!file) return alert("Please select a ZIP file first.");
-        currentFileName = file.name;
+
+        if (!file) { alert("Please select a ZIP file first."); return; }
+
+        // ── SIZE CHECK ──
+        if (file.size > MAX_ZIP_BYTES) {
+            alert(`File is too large (${(file.size / (1024*1024)).toFixed(1)} MB). Maximum allowed size is 50 MB.`);
+            return;
+        }
+
+        // ── UNIQUE KEY to avoid overwriting another user's result ──
+        const uniqueKey = `${generateUid()}-${file.name}`;
+        currentFileName = uniqueKey;
+
         resetChat();
         setLoading(true);
         statusText.innerText = "STATUS: UPLOADING";
-        // Clear github status if visible
         document.getElementById('github-status').className = 'status-badge';
 
         s3Client.putObject({
-            Bucket: 'codelens-uploads-rishabh-2026', Key: file.name,
-            ContentType: file.type, Body: file, Metadata: { 'user-level': level }
+            Bucket:      'codelens-uploads-rishabh-2026',
+            Key:         uniqueKey,
+            ContentType: file.type,
+            Body:        file,
+            Metadata:    { 'user-level': level }
         }, (err) => {
             if (err) {
                 setLoading(false);
@@ -347,107 +372,174 @@
                 alert("Upload failed: " + err.message);
                 return;
             }
-            pollForResults(file.name);
+            pollForResults(uniqueKey);
         });
     });
 
     /* ════════════════════════════════════
-       POLL DYNAMODB
+       POLL DYNAMODB  (exponential backoff)
        ════════════════════════════════════ */
     function pollForResults(fileName) {
-        const docClient  = new AWS.DynamoDB.DocumentClient();
-        let attempts     = 0;
-        const MAX        = 60;
+        const docClient = new AWS.DynamoDB.DocumentClient();
+        let   attempts  = 0;
+        const MAX       = 30;          // 30 attempts max
+        const BASE_MS   = 3000;        // start at 3 s
+        const CAP_MS    = 15000;       // never wait more than 15 s
 
-        const interval = setInterval(() => {
+        function scheduleNext() {
             attempts++;
             if (attempts > MAX) {
-                clearInterval(interval);
                 setLoading(false);
                 statusText.innerText = "STATUS: TIMEOUT";
                 alert("Analysis timed out. Please try again.");
                 return;
             }
-            docClient.get({ TableName: "CodeLensResults", Key: { "fileName": fileName } }, (err, data) => {
-                if (data && data.Item) {
-                    clearInterval(interval);
-                    setLoading(false);
-                    statusText.innerText = "STATUS: SYNCED";
-                    renderResults(data.Item.analysis);
+            // Exponential backoff: 3s, 4.5s, 6.75s … capped at 15s
+            const delay = Math.min(BASE_MS * Math.pow(1.5, attempts - 1), CAP_MS);
+            setTimeout(poll, delay);
+        }
+
+        function poll() {
+            docClient.get(
+                { TableName: "CodeLensResults", Key: { "fileName": fileName } },
+                (err, data) => {
+                    if (err) {
+                        console.warn("DynamoDB poll error:", err);
+                        scheduleNext();
+                        return;
+                    }
+                    if (data && data.Item) {
+                        setLoading(false);
+                        statusText.innerText = "STATUS: SYNCED";
+                        renderResults(data.Item.analysis, data.Item.truncated);
+                    } else {
+                        scheduleNext();
+                    }
                 }
-            });
-        }, 3000);
+            );
+        }
+
+        poll(); // kick off immediately
+    }
+
+    /* ════════════════════════════════════
+       SECTION PARSER  (robust fallback)
+       ════════════════════════════════════ */
+    function getSection(raw, n, m) {
+        // Matches "### N." or "### N " at start of line (case-insensitive, flexible spacing)
+        const startPat = new RegExp(`###\\s*${n}\\.`, 'i');
+        const endPat   = m ? new RegExp(`###\\s*${m}\\.`, 'i') : /\[END_OF_ANALYSIS\]/i;
+
+        const startMatch = raw.match(startPat);
+        if (!startMatch) return null;
+
+        const startIdx = raw.indexOf(':', startMatch.index);   // skip to after the section title colon
+        if (startIdx === -1) return null;
+
+        const endMatch  = raw.slice(startIdx).match(endPat);
+        const endIdx    = endMatch ? startIdx + endMatch.index : raw.length;
+
+        return raw.substring(startIdx + 1, endIdx).trim();
+    }
+
+    function getTagged(text, tag) {
+        if (!text) return null;
+        const marker = `[${tag}]:`;
+        const s = text.indexOf(marker);
+        if (s === -1) return null;
+        const contentStart = s + marker.length;
+        const nextTag = text.indexOf('\n[', contentStart);
+        return text.substring(contentStart, nextTag === -1 ? text.length : nextTag).trim() || null;
+    }
+
+    /* ── Safe wrappers that show a styled fallback instead of blank ── */
+    function safeRich(text, label) {
+        if (text && text.trim()) return buildRichView(text);
+        return `<div class="parse-error">⚠️ Could not extract <b>${label}</b> from the AI response. The analysis may still be loading or the format was unexpected.</div>`;
+    }
+    function safeScore(text, label) {
+        if (text && text.trim()) return buildScoreView(text, label);
+        return `<div class="parse-error">⚠️ Could not extract <b>${label}</b> score data.</div>`;
     }
 
     /* ════════════════════════════════════
        RENDER RESULTS
        ════════════════════════════════════ */
-    function renderResults(raw) {
+    function renderResults(raw, wasTruncated) {
         document.querySelector('.nav-btn[data-target="w-1"]').click();
 
-        const getSection = (n, m) => {
-            const s = raw.indexOf(`### ${n}.`);
-            const e = m ? raw.indexOf(`### ${m}.`) : raw.indexOf("[END_OF_ANALYSIS]");
-            return s === -1 ? "" : raw.substring(raw.indexOf(":", s) + 1, e === -1 ? raw.length : e).trim();
-        };
-        const getTagged = (t, g) => {
-            const s = t.indexOf(`[${g}]:`);
-            if (s === -1) return "Content Finalizing...";
-            const cs = s + g.length + 3;
-            const e  = t.indexOf("\n[", cs);
-            return t.substring(cs, e === -1 ? t.length : e).trim();
-        };
+        const s1 = getSection(raw, 1, 2);
+        const s2 = getSection(raw, 2, 3);
+        const s3 = getSection(raw, 3, 4);
+        const s4 = getSection(raw, 4, 5);
+        const s5 = getSection(raw, 5, 6);
+        const s6 = getSection(raw, 6, null);
+
+        // ── TRUNCATION BANNER (shown in every panel if applicable) ──
+        const bannerHTML = wasTruncated
+            ? `<div class="truncation-banner" style="display:block">
+                ⚠️ <b>Large repo detected:</b> This codebase exceeded the analysis limit and was partially truncated.
+                Results reflect the first ~25,000 characters of code. Some files may not be included.
+               </div>`
+            : '';
 
         // 1. Visualizer
-        document.getElementById('w-1').innerText = clean(getSection(1, 2)).replace(/\|—/g, ' └─');
+        document.getElementById('w-1').innerHTML =
+            bannerHTML +
+            `<pre style="color:#4ade80;white-space:pre-wrap;">${
+                s1 ? clean(s1).replace(/\|—/g, ' └─') : '⚠️ Architecture data unavailable.'
+            }</pre>`;
 
         // 2. Explanation
-        const exp = getSection(2, 3);
-        document.getElementById('w-2').innerHTML = `
+        document.getElementById('w-2').innerHTML = bannerHTML + `
             <div class="sub-btn-container">
                 <button class="sub-btn active" onclick="showSubView('w-2','e1',this)">Overview</button>
                 <button class="sub-btn" onclick="showSubView('w-2','e2',this)">Logic Flow</button>
                 <button class="sub-btn" onclick="showSubView('w-2','e3',this)">Analogies</button>
             </div>
-            <div id="e1" class="sub-view active">${buildRichView(getTagged(exp,'OVERVIEW'))}</div>
-            <div id="e2" class="sub-view">${buildRichView(getTagged(exp,'LOGIC_AND_CONNECTIVITY'))}</div>
-            <div id="e3" class="sub-view">${buildRichView(getTagged(exp,'REAL_WORLD_ANALOGIES'))}</div>`;
+            <div id="e1" class="sub-view active">${safeRich(getTagged(s2,'OVERVIEW'), 'Overview')}</div>
+            <div id="e2" class="sub-view">${safeRich(getTagged(s2,'LOGIC_AND_CONNECTIVITY'), 'Logic & Connectivity')}</div>
+            <div id="e3" class="sub-view">${safeRich(getTagged(s2,'REAL_WORLD_ANALOGIES'), 'Analogies')}</div>`;
 
         // 3. Simulator
-        const traceRaw = getSection(3, 4);
-        const simRoot  = document.getElementById('w-3');
-        simRoot.innerHTML = `<div class="simulator-instr"><strong>🕹️ Simulator:</strong> Deep-tracing project architecture.</div><div id="sim-tree-container"></div>`;
+        const simRoot = document.getElementById('w-3');
+        simRoot.innerHTML = bannerHTML + `<div class="simulator-instr"><strong>🕹️ Simulator:</strong> Deep-tracing project architecture.</div><div id="sim-tree-container"></div>`;
         const treeContainer = document.getElementById('sim-tree-container');
-        let lastNodes = { 0: treeContainer };
-        traceRaw.split('\n').filter(l => l.includes('|')).forEach(line => {
-            let depth = 0;
-            if (line.trim().startsWith('....')) depth = 2;
-            else if (line.trim().startsWith('..')) depth = 1;
-            else if (line.trim().startsWith('>>')) depth = 0;
-            else return;
-            const cleanLine = line.replace(/^[\s.>]+/, '').trim();
-            const [namePart, infoPart] = cleanLine.split('|');
-            const name = namePart ? namePart.trim() : "Unknown";
-            const info = infoPart ? infoPart.split('EXPLANATION:').pop().trim() : "Logic detail.";
-            const node = document.createElement('div');
-            node.className = "trace-node";
-            node.innerHTML = `
-                <div class="node-row" style="margin-left:${depth*10}px">
-                    <button class="branch-btn" onclick="toggleBranch(this)">
-                        <span>${depth===0?'📁':depth===1?'⚡':'🔹'} ${name}</span>
-                        <span class="toggle-icon">${depth<2?'[+]':''}</span>
-                    </button>
-                    <button class="info-btn" onclick="showInfo('${name}','${info}')">?</button>
-                </div>
-                <div class="child-container" style="display:none;"></div>`;
-            let parent = depth === 0 ? treeContainer : (lastNodes[depth-1]?.querySelector('.child-container') || treeContainer);
-            parent.appendChild(node);
-            lastNodes[depth] = node;
-        });
+
+        if (s3) {
+            let lastNodes = { 0: treeContainer };
+            s3.split('\n').filter(l => l.includes('|')).forEach(line => {
+                let depth = 0;
+                if (line.trim().startsWith('....'))      depth = 2;
+                else if (line.trim().startsWith('..'))   depth = 1;
+                else if (line.trim().startsWith('>>'))   depth = 0;
+                else return;
+                const cleanLine = line.replace(/^[\s.>]+/, '').trim();
+                const [namePart, infoPart] = cleanLine.split('|');
+                const name = (namePart || 'Unknown').trim();
+                const info = infoPart ? infoPart.split('EXPLANATION:').pop().trim() : 'Logic detail.';
+                const safeInfo = info.replace(/'/g, '&#39;');
+                const node = document.createElement('div');
+                node.className = "trace-node";
+                node.innerHTML = `
+                    <div class="node-row" style="margin-left:${depth*10}px">
+                        <button class="branch-btn" onclick="toggleBranch(this)">
+                            <span>${depth===0?'📁':depth===1?'⚡':'🔹'} ${name}</span>
+                            <span class="toggle-icon">${depth<2?'[+]':''}</span>
+                        </button>
+                        <button class="info-btn" onclick="showInfo('${name}','${safeInfo}')">?</button>
+                    </div>
+                    <div class="child-container" style="display:none;"></div>`;
+                const parent = depth === 0 ? treeContainer : (lastNodes[depth-1]?.querySelector('.child-container') || treeContainer);
+                parent.appendChild(node);
+                lastNodes[depth] = node;
+            });
+        } else {
+            treeContainer.innerHTML = `<div class="parse-error">⚠️ Simulator data unavailable.</div>`;
+        }
 
         // 4. Optimize
-        const opt = getSection(4, 5);
-        document.getElementById('w-4').innerHTML = `
+        document.getElementById('w-4').innerHTML = bannerHTML + `
             <div class="sub-btn-container">
                 <button class="sub-btn active" onclick="showSubView('w-4','o1',this)">Naming</button>
                 <button class="sub-btn" onclick="showSubView('w-4','o2',this)">Logic</button>
@@ -455,39 +547,37 @@
                 <button class="sub-btn" onclick="showSubView('w-4','o4',this)">Optimization</button>
                 <button class="sub-btn" onclick="showSubView('w-4','o5',this)">Pattern</button>
             </div>
-            <div id="o1" class="sub-view active">${buildRichView(getTagged(opt,'BAD_NAMING'))}</div>
-            <div id="o2" class="sub-view">${buildRichView(getTagged(opt,'DUPLICATE_LOGIC'))}</div>
-            <div id="o3" class="sub-view">${buildRichView(getTagged(opt,'SECURITY_RISKS'))}</div>
-            <div id="o4" class="sub-view">${buildRichView(getTagged(opt,'OPTIMIZATION_SUGGESTIONS'))}</div>
-            <div id="o5" class="sub-view">${buildRichView(getTagged(opt,'BETTER_ARCHITECTURE'))}</div>`;
+            <div id="o1" class="sub-view active">${safeRich(getTagged(s4,'BAD_NAMING'), 'Naming Issues')}</div>
+            <div id="o2" class="sub-view">${safeRich(getTagged(s4,'DUPLICATE_LOGIC'), 'Duplicate Logic')}</div>
+            <div id="o3" class="sub-view">${safeRich(getTagged(s4,'SECURITY_RISKS'), 'Security Risks')}</div>
+            <div id="o4" class="sub-view">${safeRich(getTagged(s4,'OPTIMIZATION_SUGGESTIONS'), 'Optimization')}</div>
+            <div id="o5" class="sub-view">${safeRich(getTagged(s4,'BETTER_ARCHITECTURE'), 'Architecture')}</div>`;
 
         // 5. Health
-        const hl = getSection(5, 6);
-        document.getElementById('w-5').innerHTML = `
+        document.getElementById('w-5').innerHTML = bannerHTML + `
             <div class="sub-btn-container">
                 <button class="sub-btn active" onclick="showSubView('w-5','h1',this)">Readability</button>
                 <button class="sub-btn" onclick="showSubView('w-5','h2',this)">Modularity</button>
                 <button class="sub-btn" onclick="showSubView('w-5','h3',this)">Security</button>
                 <button class="sub-btn" onclick="showSubView('w-5','h4',this)">Coverage</button>
             </div>
-            <div id="h1" class="sub-view active">${buildScoreView(getTagged(hl,'READABILITY'),  'Readability Score')}</div>
-            <div id="h2" class="sub-view">${buildScoreView(getTagged(hl,'MODULARITY'),  'Modularity Score')}</div>
-            <div id="h3" class="sub-view">${buildScoreView(getTagged(hl,'SECURITY'),    'Security Score')}</div>
-            <div id="h4" class="sub-view">${buildScoreView(getTagged(hl,'TEST_COVERAGE'),'Test Coverage Score')}</div>`;
+            <div id="h1" class="sub-view active">${safeScore(getTagged(s5,'READABILITY'),   'Readability Score')}</div>
+            <div id="h2" class="sub-view">${safeScore(getTagged(s5,'MODULARITY'),   'Modularity Score')}</div>
+            <div id="h3" class="sub-view">${safeScore(getTagged(s5,'SECURITY'),     'Security Score')}</div>
+            <div id="h4" class="sub-view">${safeScore(getTagged(s5,'TEST_COVERAGE'),'Test Coverage Score')}</div>`;
 
         // 6. Mentor
-        const mn = getSection(6, null);
-        document.getElementById('w-6').innerHTML = `
+        document.getElementById('w-6').innerHTML = bannerHTML + `
             <div class="sub-btn-container">
                 <button class="sub-btn active" onclick="showSubView('w-6','m1',this)">Interview Qs</button>
                 <button class="sub-btn" onclick="showSubView('w-6','m2',this)">System Design</button>
                 <button class="sub-btn" onclick="showSubView('w-6','m3',this)">Resume</button>
                 <button class="sub-btn" onclick="showSubView('w-6','m4',this)">Viva</button>
             </div>
-            <div id="m1" class="sub-view active">${buildRichView(getTagged(mn,'INTERVIEW_QS'))}</div>
-            <div id="m2" class="sub-view">${buildRichView(getTagged(mn,'SYSTEM_DESIGN'))}</div>
-            <div id="m3" class="sub-view">${buildRichView(getTagged(mn,'RESUME_BULLETS'))}</div>
-            <div id="m4" class="sub-view">${buildRichView(getTagged(mn,'VIVA_QS'))}</div>`;
+            <div id="m1" class="sub-view active">${safeRich(getTagged(s6,'INTERVIEW_QS'),  'Interview Questions')}</div>
+            <div id="m2" class="sub-view">${safeRich(getTagged(s6,'SYSTEM_DESIGN'),  'System Design')}</div>
+            <div id="m3" class="sub-view">${safeRich(getTagged(s6,'RESUME_BULLETS'), 'Resume Bullets')}</div>
+            <div id="m4" class="sub-view">${safeRich(getTagged(s6,'VIVA_QS'),        'Viva Questions')}</div>`;
     }
 
     /* ── RENDERERS ── */
@@ -496,13 +586,13 @@
     }
     function buildScoreView(rawText, label) {
         const scoreMatch = rawText.match(/SCORE:\s*(\d+(\.\d+)?)\/10/i);
-        const score = scoreMatch ? parseFloat(scoreMatch[1]) : null;
-        const bodyText = clean(rawText.replace(/SCORE:\s*\d+(\.\d+)?\/10/i, '').trim());
+        const score      = scoreMatch ? parseFloat(scoreMatch[1]) : null;
+        const bodyText   = clean(rawText.replace(/SCORE:\s*\d+(\.\d+)?\/10/i, '').trim());
         let scoreHTML = '';
         if (score !== null) {
             const pct = (score / 10) * 100;
-            const cc = score >= 7 ? 'score-high' : score >= 5 ? 'score-mid' : 'score-low';
-            const fc = score >= 7 ? 'fill-high'  : score >= 5 ? 'fill-mid'  : 'fill-low';
+            const cc  = score >= 7 ? 'score-high' : score >= 5 ? 'score-mid' : 'score-low';
+            const fc  = score >= 7 ? 'fill-high'  : score >= 5 ? 'fill-mid'  : 'fill-low';
             scoreHTML = `<div class="score-header">
                 <span class="score-label">${label}</span>
                 <span class="score-number ${cc}">${score}<span style="font-size:0.9rem;color:#64748b">/10</span></span>
@@ -528,18 +618,26 @@
         input.value = ''; input.disabled = true; sendBtn.disabled = true;
         const thinkingEl = appendThinking(history);
         chatHistory.push({ role: 'user', content: query });
+
         try {
             const result = await lambdaClient.invoke({
                 FunctionName:   LAMBDA_ANALYSIS,
                 InvocationType: 'RequestResponse',
-                Payload:        JSON.stringify({ user_query: query, file_name: currentFileName, chat_history: chatHistory.slice(-6) })
+                // Single authoritative trim here; backend does NOT re-slice
+                Payload: JSON.stringify({
+                    user_query:   query,
+                    file_name:    currentFileName,
+                    chat_history: chatHistory.slice(-CHAT_HISTORY_MAX)
+                })
             }).promise();
+
             thinkingEl.remove();
             let parsed, body;
             try {
                 parsed = typeof result.Payload === 'string' ? JSON.parse(result.Payload) : result.Payload;
                 body   = typeof parsed.body === 'string' ? JSON.parse(parsed.body) : parsed.body;
             } catch(e) { appendMessage(history, '⚠️ Could not parse response.', 'ai'); return; }
+
             if (parsed.statusCode === 200 && body?.chat_answer) {
                 appendMessage(history, body.chat_answer, 'ai');
                 chatHistory.push({ role: 'assistant', content: body.chat_answer });
