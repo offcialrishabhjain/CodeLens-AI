@@ -161,10 +161,9 @@
 
 <script>
     /* ── AWS INIT ── */
-    AWS.config.update({
-        accessKeyId:     'AKIA2HEE4M2R5EEP7EUR',
-        secretAccessKey: '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',
-        region:          'ap-south-1'
+    AWS.config.region = 'ap-south-1';
+    AWS.config.credentials = new AWS.CognitoIdentityCredentials({
+        IdentityPoolId: 'ap-south-1:2d3fed8e-b3ce-41a3-a779-4896ea437e16'
     });
 
     // ── FIX 1: Explicit endpoint prevents SDK appending :$LATEST qualifier ──
