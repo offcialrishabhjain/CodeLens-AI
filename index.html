@@ -450,11 +450,14 @@
             padding: 32px 40px;
             position: relative;
             background: var(--bg-dark);
+            overflow: hidden;
         }
+        .display.scrollable { overflow-y: auto; }
         .display::-webkit-scrollbar { width: 4px; }
         .display::-webkit-scrollbar-thumb { background: var(--border-mid); }
 
         /* PLACEHOLDER */
+        /* ── STATIC PLACEHOLDER ── */
         .placeholder {
             display: flex;
             flex-direction: column;
@@ -483,6 +486,180 @@
             font-size: 0.7rem;
             color: var(--crimson);
             letter-spacing: 2px;
+        }
+
+        /* ── LOADING OVERLAY ── */
+        #loading-overlay {
+            display: none;
+            position: absolute;
+            inset: 0;
+            background: var(--bg-dark);
+            z-index: 50;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0;
+            overflow: hidden;
+        }
+        #loading-overlay.active { display: flex; }
+
+        /* big background text */
+        .lo-bg-text {
+            position: absolute;
+            font-family: var(--display);
+            font-size: 22vw;
+            color: rgba(139,26,26,0.06);
+            letter-spacing: 16px;
+            user-select: none;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+
+        /* scan grid */
+        .lo-grid {
+            position: absolute;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(139,26,26,0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(139,26,26,0.04) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+        }
+
+        /* horizontal scan line */
+        .lo-scanline {
+            position: absolute;
+            left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--crimson), var(--red-bright), var(--crimson), transparent);
+            animation: scanmove 2.4s ease-in-out infinite;
+            box-shadow: 0 0 18px 4px rgba(192,57,43,0.35);
+        }
+        @keyframes scanmove {
+            0%   { top: 5%; opacity: 0; }
+            5%   { opacity: 1; }
+            95%  { opacity: 1; }
+            100% { top: 95%; opacity: 0; }
+        }
+
+        /* centre content */
+        .lo-center {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 28px;
+        }
+        .lo-brackets {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .lo-bracket {
+            font-family: var(--display);
+            font-size: 5rem;
+            color: var(--crimson);
+            line-height: 1;
+            opacity: 0.5;
+        }
+        .lo-title {
+            font-family: var(--display);
+            font-size: 3.2rem;
+            letter-spacing: 10px;
+            color: var(--white);
+            text-align: center;
+        }
+        .lo-status-line {
+            font-family: var(--mono);
+            font-size: 0.68rem;
+            letter-spacing: 3px;
+            color: var(--beige-dim);
+            text-transform: uppercase;
+            text-align: center;
+        }
+        .lo-status-line span {
+            color: var(--red-bright);
+        }
+
+        /* progress bar */
+        .lo-progress-wrap {
+            width: 320px;
+            height: 2px;
+            background: var(--border-mid);
+            position: relative;
+            overflow: hidden;
+        }
+        .lo-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--crimson), var(--red-bright));
+            animation: progressindeterminate 1.8s ease-in-out infinite;
+        }
+        @keyframes progressindeterminate {
+            0%   { width: 0%;   margin-left: 0%; }
+            50%  { width: 60%;  margin-left: 20%; }
+            100% { width: 0%;   margin-left: 100%; }
+        }
+
+        /* ticker tape of code tokens */
+        .lo-ticker {
+            width: 320px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            background: var(--bg-panel);
+            padding: 10px 14px;
+            height: 120px;
+            position: relative;
+        }
+        .lo-ticker::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            height: 40px;
+            background: linear-gradient(transparent, var(--bg-panel));
+            pointer-events: none;
+        }
+        .lo-ticker-inner {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .lo-tick-line {
+            font-family: var(--mono);
+            font-size: 0.62rem;
+            color: var(--beige-dim);
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+            opacity: 0;
+            animation: tickfadein 0.3s ease forwards;
+        }
+        .lo-tick-line.accent { color: var(--red-bright); }
+        .lo-tick-line.bright { color: var(--beige); }
+        @keyframes tickfadein {
+            from { opacity: 0; transform: translateY(4px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* corner decorations */
+        .lo-corner {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+        }
+        .lo-corner.tl { top: 24px; left: 24px; border-top: 1px solid var(--crimson); border-left: 1px solid var(--crimson); }
+        .lo-corner.tr { top: 24px; right: 24px; border-top: 1px solid var(--crimson); border-right: 1px solid var(--crimson); }
+        .lo-corner.bl { bottom: 24px; left: 24px; border-bottom: 1px solid var(--crimson); border-left: 1px solid var(--crimson); }
+        .lo-corner.br { bottom: 24px; right: 24px; border-bottom: 1px solid var(--crimson); border-right: 1px solid var(--crimson); }
+
+        /* coord readout */
+        .lo-coords {
+            position: absolute;
+            bottom: 32px;
+            font-family: var(--mono);
+            font-size: 0.58rem;
+            color: var(--border-mid);
+            letter-spacing: 2px;
+            display: flex;
+            gap: 32px;
         }
 
         /* WIDGET PANELS */
@@ -941,6 +1118,32 @@
                     <div class="placeholder-sub">Upload a project to begin analysis</div>
                 </div>
 
+                <!-- LOADING OVERLAY -->
+                <div id="loading-overlay">
+                    <div class="lo-bg-text">ANALYSING</div>
+                    <div class="lo-grid"></div>
+                    <div class="lo-scanline"></div>
+                    <div class="lo-corner tl"></div>
+                    <div class="lo-corner tr"></div>
+                    <div class="lo-corner bl"></div>
+                    <div class="lo-corner br"></div>
+                    <div class="lo-center">
+                        <div class="lo-brackets">
+                            <div class="lo-bracket">[</div>
+                            <div class="lo-title">CODELENS</div>
+                            <div class="lo-bracket">]</div>
+                        </div>
+                        <div class="lo-status-line">SCANNING CODEBASE <span id="lo-status-txt">INITIALISING...</span></div>
+                        <div class="lo-progress-wrap"><div class="lo-progress-fill"></div></div>
+                        <div class="lo-ticker"><div class="lo-ticker-inner" id="lo-ticker"></div></div>
+                    </div>
+                    <div class="lo-coords">
+                        <span id="lo-coord-x">X: 0000</span>
+                        <span>CODELENS_AI / AP-SOUTH-1</span>
+                        <span id="lo-coord-y">Y: 0000</span>
+                    </div>
+                </div>
+
                 <!-- WIDGETS -->
                 <div id="w-1" class="widget"></div>
                 <div id="w-2" class="widget"></div>
@@ -1006,10 +1209,94 @@
         bar.className   = 'loader-bar ' + (state === 'loading' ? 'active' : '');
     }
 
+    /* ── LOADING OVERLAY TICKER ── */
+    const TICK_MESSAGES = [
+        ['bright', '> INITIALISING CODELENS ENGINE...'],
+        ['', '  reading archive structure...'],
+        ['accent', '  [ SCANNING ] file tree resolved'],
+        ['', '  filtering binary & generated assets...'],
+        ['', '  extracting source code snippets...'],
+        ['accent', '  [ OK ] code context assembled'],
+        ['', '  tokenising input for model...'],
+        ['bright', '> INVOKING BEDROCK — amazon.nova-micro'],
+        ['', '  dispatching inference request...'],
+        ['', '  waiting for model response...'],
+        ['accent', '  [ OK ] model acknowledged'],
+        ['bright', '> PARSING ARCHITECTURE LAYERS...'],
+        ['', '  section 1: visualizer tree...'],
+        ['', '  section 2: codebase explanation...'],
+        ['', '  section 3: execution trace...'],
+        ['accent', '  [ OK ] sections 1–3 parsed'],
+        ['bright', '> RUNNING OPTIMIZATION ANALYSIS...'],
+        ['', '  checking naming conventions...'],
+        ['', '  detecting duplicate logic...'],
+        ['', '  auditing security posture...'],
+        ['accent', '  [ OK ] optimization complete'],
+        ['bright', '> COMPUTING HEALTH SCORES...'],
+        ['', '  readability index: calculating...'],
+        ['', '  modularity score: calculating...'],
+        ['', '  test coverage: calculating...'],
+        ['accent', '  [ OK ] health report ready'],
+        ['bright', '> WRITING TO DYNAMODB...'],
+        ['', '  table: CodeLensResults'],
+        ['', '  persisting analysis payload...'],
+        ['accent', '  [ OK ] results stored'],
+        ['bright', '> POLLING FOR COMPLETION...'],
+        ['', '  awaiting sync confirmation...'],
+        ['accent', '  [ READY ] analysis complete'],
+    ];
+
+    let tickInterval = null;
+    let tickIdx = 0;
+    let coordInterval = null;
+
+    function startLoadingOverlay() {
+        const overlay = document.getElementById('loading-overlay');
+        const ticker  = document.getElementById('lo-ticker');
+        const statusTxt = document.getElementById('lo-status-txt');
+        overlay.classList.add('active');
+        document.getElementById('placeholder').style.display = 'none';
+        ticker.innerHTML = '';
+        tickIdx = 0;
+
+        const statusLabels = ['INITIALISING...', 'SCANNING FILES...', 'INVOKING MODEL...', 'PARSING RESULTS...', 'WRITING DB...', 'AWAITING SYNC...'];
+        let statusIdx = 0;
+
+        tickInterval = setInterval(() => {
+            if (tickIdx >= TICK_MESSAGES.length) { tickIdx = 0; ticker.innerHTML = ''; }
+            const [cls, txt] = TICK_MESSAGES[tickIdx++];
+            const line = document.createElement('div');
+            line.className = 'lo-tick-line' + (cls ? ' ' + cls : '');
+            line.textContent = txt;
+            ticker.appendChild(line);
+            // keep only last 8 lines visible
+            while (ticker.children.length > 8) ticker.removeChild(ticker.firstChild);
+            // rotate status label
+            if (tickIdx % 5 === 0) {
+                statusIdx = (statusIdx + 1) % statusLabels.length;
+                statusTxt.textContent = statusLabels[statusIdx];
+            }
+        }, 420);
+
+        // animated coordinate readout
+        coordInterval = setInterval(() => {
+            document.getElementById('lo-coord-x').textContent = 'X: ' + String(Math.floor(Math.random()*9999)).padStart(4,'0');
+            document.getElementById('lo-coord-y').textContent = 'Y: ' + String(Math.floor(Math.random()*9999)).padStart(4,'0');
+        }, 180);
+    }
+
+    function stopLoadingOverlay() {
+        clearInterval(tickInterval);
+        clearInterval(coordInterval);
+        document.getElementById('loading-overlay').classList.remove('active');
+        document.getElementById('display-panel').classList.add('scrollable');
+    }
+
     function setLoading(on) {
         document.getElementById('upload-button').disabled = on;
         document.getElementById('github-btn').disabled    = on;
         setStatus(on ? 'loading' : '', on ? 'PROCESSING' : 'IDLE');
+        if (on) { startLoadingOverlay(); } else { stopLoadingOverlay(); }
     }
 
     function resetChat() {
