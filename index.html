@@ -6,7 +6,6 @@
     <title>CodeLens-AI | Smart Project Analysis</title>
     <script src="https://sdk.amazonaws.com/js/aws-sdk-2.1610.0.min.js"></script>
     <style>
-        /* --- Premium 2026 SaaS Theme --- */
         body { font-family: 'Inter', 'Segoe UI', sans-serif; background: radial-gradient(circle at top right, #1e293b, #0b0f1a); margin: 0; display: flex; flex-direction: column; height: 100vh; color: #e2e8f0; overflow: hidden; }
         
         .nav-bar { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); padding: 15px 40px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); z-index: 10; }
@@ -15,7 +14,6 @@
 
         .main-layout { display: flex; flex: 1; padding: 25px; gap: 25px; overflow: hidden; }
         
-        /* Sidebar Glass Controls */
         .control-panel { width: 350px; background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(12px); padding: 25px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; gap: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         
         .sidebar-label { font-size: 0.75rem; font-weight: 700; color: #94a3b8; letter-spacing: 1px; text-transform: uppercase; }
@@ -27,25 +25,82 @@
 
         .processing-notice { background: rgba(56, 189, 248, 0.05); border: 1px solid rgba(56, 189, 248, 0.3); padding: 15px; border-radius: 12px; font-size: 0.75rem; color: #94a3b8; line-height: 1.5; margin-top: auto; }
 
-        /* Dashboard Command Center */
         .dashboard-panel { flex: 1; display: flex; flex-direction: column; gap: 20px; overflow: hidden; }
         .command-bar { display: flex; gap: 10px; background: rgba(15, 23, 42, 0.6); padding: 10px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.05); }
         .nav-btn { flex: 1; padding: 12px; border: none; border-radius: 10px; background: transparent; color: #94a3b8; font-weight: 600; cursor: pointer; transition: 0.3s; font-size: 0.75rem; text-transform: uppercase; }
         .nav-btn.active { background: #38bdf8; color: #0f172a; box-shadow: 0 0 15px rgba(56, 189, 248, 0.5); font-weight: 800; }
 
-        /* Main Display Panel */
         .display-panel { flex: 1; background: rgba(0, 0, 0, 0.6); border-radius: 20px; border: 1px solid rgba(16, 185, 129, 0.3); padding: 30px; overflow-y: auto; font-family: 'Fira Code', monospace; position: relative; box-shadow: inset 0 0 30px rgba(0,0,0,1); }
         .widget-content { display: none; animation: fadeIn 0.4s ease; white-space: pre-wrap; line-height: 1.7; color: #4ade80; }
         .widget-content.active { display: block; }
 
-        /* Doubts Chat Styling */
-        .chat-container { display: flex; flex-direction: column; height: 100%; }
-        #chat-history { flex: 1; overflow-y: auto; margin-bottom: 15px; padding: 10px; border: 1px solid rgba(56, 189, 248, 0.2); border-radius: 10px; background: rgba(15, 23, 42, 0.4); }
-        .chat-msg { margin-bottom: 10px; padding: 8px 12px; border-radius: 8px; max-width: 80%; }
-        .user-msg { background: rgba(56, 189, 248, 0.1); align-self: flex-end; color: #38bdf8; border: 1px solid #38bdf8; }
-        .ai-msg { background: rgba(16, 185, 129, 0.1); align-self: flex-start; color: #4ade80; border: 1px solid #10b981; }
+        /* ── CHAT SECTION ── */
+        #w-7 { white-space: normal; }
+        .chat-outer { display: flex; flex-direction: column; height: 100%; gap: 12px; }
 
-        /* Existing component styles remain same... */
+        .chat-instr { background: rgba(56, 189, 248, 0.05); border: 1px solid rgba(56, 189, 248, 0.3); padding: 12px 16px; border-radius: 12px; font-size: 0.75rem; color: #94a3b8; line-height: 1.5; flex-shrink: 0; }
+        .chat-instr strong { color: #38bdf8; }
+
+        #chat-history {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding: 12px;
+            border: 1px solid rgba(56, 189, 248, 0.15);
+            border-radius: 14px;
+            background: rgba(15, 23, 42, 0.5);
+            min-height: 0;
+        }
+
+        .chat-msg {
+            padding: 10px 14px;
+            border-radius: 10px;
+            font-size: 0.82rem;
+            line-height: 1.6;
+            max-width: 85%;
+            word-break: break-word;
+            white-space: pre-wrap;
+            font-family: 'Inter', sans-serif;
+        }
+        .user-msg { background: rgba(56, 189, 248, 0.12); color: #7dd3fc; border: 1px solid rgba(56,189,248,0.3); align-self: flex-end; border-bottom-right-radius: 3px; }
+        .ai-msg   { background: rgba(16, 185, 129, 0.1);  color: #6ee7b7; border: 1px solid rgba(16,185,129,0.25); align-self: flex-start; border-bottom-left-radius: 3px; }
+        .ai-msg.thinking { color: #64748b; font-style: italic; }
+
+        .chat-input-row { display: flex; gap: 10px; flex-shrink: 0; }
+        .chat-input-row input {
+            flex: 1;
+            background: #0f172a;
+            border: 1px solid #334155;
+            color: #f8fafc;
+            padding: 12px 16px;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            outline: none;
+            font-family: 'Inter', sans-serif;
+            transition: border-color 0.2s;
+        }
+        .chat-input-row input:focus { border-color: #38bdf8; }
+        .chat-input-row input::placeholder { color: #475569; }
+        .chat-send-btn {
+            background: #38bdf8;
+            color: #0f172a;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-weight: 800;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: 0.2s;
+            white-space: nowrap;
+        }
+        .chat-send-btn:hover  { background: #7dd3fc; }
+        .chat-send-btn:disabled { background: #334155; color: #64748b; cursor: not-allowed; }
+
+        #chat-no-project { color: #ef4444; font-size: 0.75rem; text-align: center; display: none; padding: 8px; background: rgba(239,68,68,0.08); border-radius: 8px; border: 1px solid rgba(239,68,68,0.2); }
+
+        /* Other existing styles */
         .sub-btn-container { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; border-bottom: 1px solid #334155; padding-bottom: 15px; }
         .sub-btn { background: rgba(56, 189, 248, 0.1); border: 1px solid #38bdf8; color: #38bdf8; padding: 8px 15px; border-radius: 8px; font-size: 0.7rem; cursor: pointer; transition: 0.2s; font-weight: bold; text-transform: uppercase; }
         .sub-btn:hover, .sub-btn.active { background: #38bdf8; color: #0f172a; }
@@ -68,6 +123,12 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
         .loader { border: 3px solid #334155; border-top: 3px solid #38bdf8; border-radius: 50%; width: 25px; height: 25px; animation: spin 1s linear infinite; margin: 10px auto; display: none; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Typing dots */
+        .typing-dots span { display: inline-block; width: 6px; height: 6px; margin: 0 2px; background: #4ade80; border-radius: 50%; animation: bounce 1.2s infinite; }
+        .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes bounce { 0%,80%,100% { transform: translateY(0); } 40% { transform: translateY(-6px); } }
     </style>
 </head>
 <body>
@@ -123,13 +184,18 @@
                 <div id="w-4" class="widget-content"></div>
                 <div id="w-5" class="widget-content"></div>
                 <div id="w-6" class="widget-content"></div>
+
+                <!-- ── DOUBTS CHAT TAB ── -->
                 <div id="w-7" class="widget-content">
-                    <div class="chat-container">
-                        <div class="simulator-instr"><strong>💬 Project Doubts:</strong> Chat with AI about your uploaded code.</div>
-                        <div id="chat-history" style="display: flex; flex-direction: column;"></div>
-                        <div style="display: flex; gap: 10px;">
-                            <input type="text" id="doubt-input" class="sidebar-btn" style="text-align: left; flex: 1;" placeholder="Ask a question about your code...">
-                            <button class="sub-btn" onclick="askDoubt()">Send</button>
+                    <div class="chat-outer">
+                        <div class="chat-instr">
+                            <strong>💬 Project Doubts</strong> — Ask anything about your uploaded codebase. The AI has full context of your project's code and analysis.
+                        </div>
+                        <div id="chat-no-project">⚠️ Please upload and analyse a project first before asking questions.</div>
+                        <div id="chat-history"></div>
+                        <div class="chat-input-row">
+                            <input type="text" id="doubt-input" placeholder="e.g. What does the lambda_handler function do?" />
+                            <button class="chat-send-btn" id="chat-send-btn" onclick="askDoubt()">Send ➤</button>
                         </div>
                     </div>
                 </div>
@@ -146,14 +212,21 @@
     </div>
 
 <script>
-    /* --- AWS INITIALIZATION --- */
-    AWS.config.update({ accessKeyId: 'AKIA2HEE4M2R5EEP7EUR', secretAccessKey: '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', region: 'ap-south-1' });
-    const s3 = new AWS.S3();
+    /* ── AWS INIT ── */
+    AWS.config.update({
+        accessKeyId:     'AKIA2HEE4M2R5EEP7EUR',
+        secretAccessKey: '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',
+        region:          'ap-south-1'
+    });
+    const s3Client  = new AWS.S3();
+    const lambda    = new AWS.Lambda();
     const statusText = document.getElementById('status');
-    const loader = document.getElementById('loader');
-    let currentFileName = "";
+    const loader     = document.getElementById('loader');
 
-    /* --- UI HELPERS --- */
+    let currentFileName = "";   // set after upload
+    let chatHistory     = [];   // multi-turn memory [{role, content}, ...]
+
+    /* ── UI HELPERS ── */
     function clean(text) { return text.replace(/[#*]/g, '').trim(); }
 
     window.showSubView = function(widgetId, subId, btn) {
@@ -188,53 +261,145 @@
 
     function updateFileName(input) { document.getElementById('file-name-display').innerText = input.files[0].name; }
 
-    /* --- CHAT FUNCTIONALITY --- */
-    function askDoubt() {
-        const input = document.getElementById('doubt-input');
-        const history = document.getElementById('chat-history');
-        const query = input.value.trim();
-        if(!query || !currentFileName) return;
+    /* ── ENTER KEY SUPPORT FOR CHAT ── */
+    document.getElementById('doubt-input').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); askDoubt(); }
+    });
 
-        // Display user message
-        history.innerHTML += `<div class="chat-msg user-msg">${query}</div>`;
-        input.value = "";
-        
-        const lambda = new AWS.Lambda();
-        const params = {
-            FunctionName: 'CodeLensBackend', // Replace with your Lambda name
-            Payload: JSON.stringify({ "user_query": query, "file_name": currentFileName })
-        };
+    /* ════════════════════════════════════════
+       CHAT — askDoubt()
+       ════════════════════════════════════════ */
+    async function askDoubt() {
+        const input    = document.getElementById('doubt-input');
+        const sendBtn  = document.getElementById('chat-send-btn');
+        const history  = document.getElementById('chat-history');
+        const noProj   = document.getElementById('chat-no-project');
+        const query    = input.value.trim();
 
-        lambda.invoke(params, (err, data) => {
-            if (data && data.Payload) {
-                const response = JSON.parse(JSON.parse(data.Payload).body);
-                history.innerHTML += `<div class="chat-msg ai-msg">${response.chat_answer}</div>`;
-                history.scrollTop = history.scrollHeight;
+        if (!query) return;
+
+        // Warn if no project uploaded yet
+        if (!currentFileName) {
+            noProj.style.display = 'block';
+            return;
+        }
+        noProj.style.display = 'none';
+
+        // Render user bubble
+        appendMessage(history, query, 'user');
+        input.value = '';
+        input.disabled = true;
+        sendBtn.disabled = true;
+
+        // Thinking indicator
+        const thinkingEl = appendThinking(history);
+
+        // Add to local history
+        chatHistory.push({ role: 'user', content: query });
+
+        // Invoke Lambda
+        try {
+            const payload = {
+                user_query:   query,
+                file_name:    currentFileName,
+                chat_history: chatHistory.slice(-6)  // last 6 turns
+            };
+
+            const result = await lambda.invoke({
+                FunctionName:   'CodeLensBackend',   // ← your Lambda function name
+                InvocationType: 'RequestResponse',
+                Payload:        JSON.stringify(payload)
+            }).promise();
+
+            thinkingEl.remove();
+
+            const parsed = JSON.parse(result.Payload);
+            const body   = JSON.parse(parsed.body);
+
+            if (parsed.statusCode === 200 && body.chat_answer) {
+                const answer = body.chat_answer;
+                appendMessage(history, answer, 'ai');
+                chatHistory.push({ role: 'assistant', content: answer });
+            } else {
+                appendMessage(history, '⚠️ Could not get a response. Please try again.', 'ai');
             }
-        });
+
+        } catch (err) {
+            thinkingEl.remove();
+            appendMessage(history, `⚠️ Error: ${err.message}`, 'ai');
+            console.error('Chat error:', err);
+        }
+
+        input.disabled = false;
+        sendBtn.disabled = false;
+        input.focus();
+        history.scrollTop = history.scrollHeight;
     }
 
-    /* --- UPLOAD & POLL --- */
+    function appendMessage(container, text, role) {
+        const div = document.createElement('div');
+        div.className = `chat-msg ${role === 'user' ? 'user-msg' : 'ai-msg'}`;
+        div.innerText = text;
+        container.appendChild(div);
+        container.scrollTop = container.scrollHeight;
+        return div;
+    }
+
+    function appendThinking(container) {
+        const div = document.createElement('div');
+        div.className = 'chat-msg ai-msg thinking';
+        div.innerHTML = `Thinking <span class="typing-dots"><span></span><span></span><span></span></span>`;
+        container.appendChild(div);
+        container.scrollTop = container.scrollHeight;
+        return div;
+    }
+
+    /* ── UPLOAD & POLL ── */
     document.getElementById('upload-button').addEventListener('click', function() {
-        const file = document.getElementById('file-chooser').files[0];
+        const file  = document.getElementById('file-chooser').files[0];
         const level = document.getElementById('user-level').value;
         if (!file) return alert("Select ZIP first.");
         currentFileName = file.name;
+
+        // Reset chat state for new project
+        chatHistory = [];
+        document.getElementById('chat-history').innerHTML = '';
+        document.getElementById('chat-no-project').style.display = 'none';
+
         loader.style.display = "block";
         statusText.innerText = "STATUS: UPLOADING";
-        s3.putObject({ Bucket: 'codelens-uploads-rishabh-2026', Key: file.name, ContentType: file.type, Body: file, Metadata: { 'user-level': level } }, () => pollForResults(file.name));
+
+        s3Client.putObject({
+            Bucket:      'codelens-uploads-rishabh-2026',
+            Key:         file.name,
+            ContentType: file.type,
+            Body:        file,
+            Metadata:    { 'user-level': level }
+        }, () => pollForResults(file.name));
     });
 
     function pollForResults(fileName) {
         const docClient = new AWS.DynamoDB.DocumentClient();
+        let attempts    = 0;
+        const MAX_ATTEMPTS = 60;  // 3-min timeout (60 × 3s)
+
         const interval = setInterval(() => {
+            attempts++;
+            if (attempts > MAX_ATTEMPTS) {
+                clearInterval(interval);
+                loader.style.display = "none";
+                statusText.innerText = "STATUS: TIMEOUT";
+                alert("Analysis timed out. Please try again.");
+                return;
+            }
+
             docClient.get({ TableName: "CodeLensResults", Key: { "fileName": fileName } }, (err, data) => {
                 if (data && data.Item) {
+                    clearInterval(interval);
                     loader.style.display = "none";
                     statusText.innerText = "STATUS: SYNCED";
                     const raw = data.Item.analysis;
 
-                    // FIX: Automatically show Visualizer when data arrives
                     document.querySelector('.nav-btn[data-target="w-1"]').click();
 
                     const getSection = (n, m) => {
@@ -247,7 +412,7 @@
                         const s = t.indexOf(`[${g}]:`);
                         if (s === -1) return "Content Finalizing...";
                         const cs = s + g.length + 3;
-                        const e = t.indexOf("[", cs);
+                        const e  = t.indexOf("[", cs);
                         return clean(t.substring(cs, e === -1 ? t.length : e));
                     };
 
@@ -267,12 +432,12 @@
                         <div id="e3" class="sub-view">${getTagged(exp, 'REAL_WORLD_ANALOGIES')}</div>
                     `;
 
-                    // 3. Simulator Tree 
+                    // 3. Simulator Tree
                     const traceRaw = getSection(3, 4);
-                    const simRoot = document.getElementById('w-3');
+                    const simRoot  = document.getElementById('w-3');
                     simRoot.innerHTML = `<div class="simulator-instr"><strong>🕹️ Simulator:</strong> Deep-tracing project architecture.</div><div id="sim-tree-container"></div>`;
                     const treeContainer = document.getElementById('sim-tree-container');
-                    let lastNodes = { 0: treeContainer }; 
+                    let lastNodes = { 0: treeContainer };
                     const traceLines = traceRaw.split('\n').filter(l => l.includes('|'));
                     traceLines.forEach(line => {
                         let depth = 0;
@@ -289,7 +454,7 @@
                         node.innerHTML = `
                             <div class="node-row" style="margin-left: ${depth * 10}px">
                                 <button class="branch-btn" onclick="toggleBranch(this)">
-                                    <span>${depth === 0 ? '📁' : depth === 1 ? '⚡' : '🔹'} ${name}</span> 
+                                    <span>${depth === 0 ? '📁' : depth === 1 ? '⚡' : '🔹'} ${name}</span>
                                     <span class="toggle-icon">${depth < 2 ? '[+]' : ''}</span>
                                 </button>
                                 <button class="info-btn" onclick="showInfo('${name}', '${info}')">?</button>
@@ -311,8 +476,6 @@
                     // 6. Mentor
                     const mn = getSection(6, null);
                     document.getElementById('w-6').innerHTML = `<div class="sub-btn-container"><button class="sub-btn active" onclick="showSubView('w-6', 'm1', this)">Interview Qs</button><button class="sub-btn" onclick="showSubView('w-6', 'm2', this)">System Design</button><button class="sub-btn" onclick="showSubView('w-6', 'm3', this)">Resume</button><button class="sub-btn" onclick="showSubView('w-6', 'm4', this)">Viva</button></div><div id="m1" class="sub-view active">${getTagged(mn, 'INTERVIEW_QS')}</div><div id="m2" class="sub-view">${getTagged(mn, 'SYSTEM_DESIGN')}</div><div id="m3" class="sub-view">${getTagged(mn, 'RESUME_BULLETS')}</div><div id="m4" class="sub-view">${getTagged(mn, 'VIVA_QS')}</div>`;
-
-                    clearInterval(interval);
                 }
             });
         }, 3000);
