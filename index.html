@@ -7,33 +7,57 @@
     <script src="https://sdk.amazonaws.com/js/aws-sdk-2.1610.0.min.js"></script>
     <style>
         body { font-family: 'Inter', 'Segoe UI', sans-serif; background: radial-gradient(circle at top right, #1e293b, #0b0f1a); margin: 0; display: flex; flex-direction: column; height: 100vh; color: #e2e8f0; overflow: hidden; }
-        
         .nav-bar { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); padding: 15px 40px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); z-index: 10; }
         .logo { font-size: 1.6rem; font-weight: 800; color: #38bdf8; display: flex; align-items: center; gap: 10px; }
         .header-accent { color: #fbbf24; }
-
         .main-layout { display: flex; flex: 1; padding: 25px; gap: 25px; overflow: hidden; }
-        
         .control-panel { width: 350px; background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(12px); padding: 25px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; gap: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        
         .sidebar-label { font-size: 0.75rem; font-weight: 700; color: #94a3b8; letter-spacing: 1px; text-transform: uppercase; }
         .sidebar-btn { background: #0f172a; border: 1px solid #334155; color: #f8fafc; padding: 12px; border-radius: 10px; cursor: pointer; text-align: center; font-size: 0.85rem; transition: 0.3s; width: 100%; box-sizing: border-box; outline: none; }
         .sidebar-btn:hover { border-color: #38bdf8; background: rgba(56, 189, 248, 0.05); }
-        
         .deploy-btn { background: #38bdf8 !important; color: #0f172a !important; font-weight: 800 !important; border: none !important; margin-top: 10px; }
         .deploy-btn:hover { background: #7dd3fc !important; transform: translateY(-2px); }
-
         .processing-notice { background: rgba(56, 189, 248, 0.05); border: 1px solid rgba(56, 189, 248, 0.3); padding: 15px; border-radius: 12px; font-size: 0.75rem; color: #94a3b8; line-height: 1.5; margin-top: auto; }
-
         .dashboard-panel { flex: 1; display: flex; flex-direction: column; gap: 20px; overflow: hidden; }
         .command-bar { display: flex; gap: 10px; background: rgba(15, 23, 42, 0.6); padding: 10px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.05); }
         .nav-btn { flex: 1; padding: 12px; border: none; border-radius: 10px; background: transparent; color: #94a3b8; font-weight: 600; cursor: pointer; transition: 0.3s; font-size: 0.75rem; text-transform: uppercase; }
         .nav-btn.active { background: #38bdf8; color: #0f172a; box-shadow: 0 0 15px rgba(56, 189, 248, 0.5); font-weight: 800; }
-
         .display-panel { flex: 1; background: rgba(0, 0, 0, 0.6); border-radius: 20px; border: 1px solid rgba(16, 185, 129, 0.3); padding: 30px; overflow-y: auto; font-family: 'Fira Code', monospace; position: relative; box-shadow: inset 0 0 30px rgba(0,0,0,1); }
         .widget-content { display: none; animation: fadeIn 0.4s ease; white-space: pre-wrap; line-height: 1.7; color: #4ade80; }
         .widget-content.active { display: block; }
 
+        /* ── SCORE BAR ── */
+        .score-header {
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            border-radius: 14px;
+            padding: 16px 20px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 18px;
+        }
+        .score-label { font-size: 0.7rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; white-space: nowrap; font-family: 'Inter', sans-serif; }
+        .score-number { font-size: 1.8rem; font-weight: 900; font-family: 'Inter', sans-serif; min-width: 52px; text-align: center; }
+        .score-bar-wrap { flex: 1; background: #1e293b; border-radius: 999px; height: 10px; overflow: hidden; }
+        .score-bar-fill { height: 100%; border-radius: 999px; transition: width 1s ease; }
+        .score-high   { color: #4ade80; }
+        .score-mid    { color: #fbbf24; }
+        .score-low    { color: #f87171; }
+        .fill-high    { background: linear-gradient(90deg, #10b981, #4ade80); }
+        .fill-mid     { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+        .fill-low     { background: linear-gradient(90deg, #ef4444, #f87171); }
+
+        /* ── RICH TEXT CONTENT ── */
+        .rich-content {
+            color: #cbd5e1;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.85rem;
+            line-height: 1.8;
+            white-space: pre-wrap;
+        }
+
+        /* ── CHAT SECTION ── */
         #w-7 { white-space: normal; }
         .chat-outer { display: flex; flex-direction: column; height: 100%; gap: 12px; }
         .chat-instr { background: rgba(56, 189, 248, 0.05); border: 1px solid rgba(56, 189, 248, 0.3); padding: 12px 16px; border-radius: 12px; font-size: 0.75rem; color: #94a3b8; line-height: 1.5; flex-shrink: 0; }
@@ -41,14 +65,14 @@
         #chat-history { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding: 12px; border: 1px solid rgba(56, 189, 248, 0.15); border-radius: 14px; background: rgba(15, 23, 42, 0.5); min-height: 0; }
         .chat-msg { padding: 10px 14px; border-radius: 10px; font-size: 0.82rem; line-height: 1.6; max-width: 85%; word-break: break-word; white-space: pre-wrap; font-family: 'Inter', sans-serif; }
         .user-msg { background: rgba(56, 189, 248, 0.12); color: #7dd3fc; border: 1px solid rgba(56,189,248,0.3); align-self: flex-end; border-bottom-right-radius: 3px; }
-        .ai-msg   { background: rgba(16, 185, 129, 0.1);  color: #6ee7b7; border: 1px solid rgba(16,185,129,0.25); align-self: flex-start; border-bottom-left-radius: 3px; }
+        .ai-msg   { background: rgba(16, 185, 129, 0.1); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.25); align-self: flex-start; border-bottom-left-radius: 3px; }
         .ai-msg.thinking { color: #64748b; font-style: italic; }
         .chat-input-row { display: flex; gap: 10px; flex-shrink: 0; }
         .chat-input-row input { flex: 1; background: #0f172a; border: 1px solid #334155; color: #f8fafc; padding: 12px 16px; border-radius: 10px; font-size: 0.85rem; outline: none; font-family: 'Inter', sans-serif; transition: border-color 0.2s; }
         .chat-input-row input:focus { border-color: #38bdf8; }
         .chat-input-row input::placeholder { color: #475569; }
         .chat-send-btn { background: #38bdf8; color: #0f172a; border: none; padding: 12px 20px; border-radius: 10px; font-weight: 800; font-size: 0.85rem; cursor: pointer; transition: 0.2s; white-space: nowrap; }
-        .chat-send-btn:hover  { background: #7dd3fc; }
+        .chat-send-btn:hover { background: #7dd3fc; }
         .chat-send-btn:disabled { background: #334155; color: #64748b; cursor: not-allowed; }
         #chat-no-project { color: #ef4444; font-size: 0.75rem; text-align: center; display: none; padding: 8px; background: rgba(239,68,68,0.08); border-radius: 8px; border: 1px solid rgba(239,68,68,0.2); }
 
@@ -57,7 +81,6 @@
         .sub-btn:hover, .sub-btn.active { background: #38bdf8; color: #0f172a; }
         .sub-view { display: none; color: #e2e8f0; animation: fadeIn 0.3s ease; }
         .sub-view.active { display: block; }
-
         .simulator-instr { background: rgba(251, 191, 36, 0.05); border: 1px solid rgba(251, 191, 36, 0.3); padding: 15px; border-radius: 12px; margin-bottom: 20px; color: #fbbf24; font-size: 0.8rem; line-height: 1.4; }
         .trace-node { margin: 10px 0; position: relative; }
         .child-container { display: none; margin-left: 35px; padding-left: 15px; border-left: 2px solid #334155; margin-top: 5px; }
@@ -66,11 +89,9 @@
         .branch-btn:hover { border-color: #fbbf24; background: rgba(251, 191, 36, 0.1); }
         .info-btn { background: #fbbf24; color: #0f172a; border: none; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; font-weight: 900; flex-shrink: 0; }
         .info-btn:hover { transform: scale(1.1); }
-
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); }
         .modal-content { background: #1e293b; margin: 10% auto; padding: 30px; border: 1px solid #fbbf24; width: 500px; border-radius: 20px; position: relative; box-shadow: 0 0 40px rgba(0,0,0,0.5); }
         .close { position: absolute; top: 15px; right: 20px; color: #94a3b8; font-size: 24px; cursor: pointer; }
-
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
         .loader { border: 3px solid #334155; border-top: 3px solid #38bdf8; border-radius: 50%; width: 25px; height: 25px; animation: spin 1s linear infinite; margin: 10px auto; display: none; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -81,7 +102,6 @@
     </style>
 </head>
 <body>
-
     <div class="nav-bar">
         <div class="logo">🔍 CodeLens<span class="header-accent">AI</span></div>
         <div id="status" style="font-size: 0.75rem; color: #38bdf8; font-family: monospace;">KERNEL_IDLE</div>
@@ -93,23 +113,19 @@
                 <span style="color: #38bdf8; font-weight: bold; font-size: 0.8rem; display: block; margin-bottom: 5px;">📦 GITHUB UPLOAD</span>
                 <p style="font-size: 0.7rem; color: #94a3b8; margin: 0; line-height: 1.4;">Upload ZIP from GitHub (Code > Download ZIP).</p>
             </div>
-
             <span class="sidebar-label">Experience Level</span>
             <select id="user-level" class="sidebar-btn">
                 <option value="Beginner">Beginner</option>
                 <option value="Intermediate" selected>Intermediate</option>
                 <option value="Advanced">Advanced</option>
             </select>
-
             <span class="sidebar-label">Repository Archive</span>
             <button class="sidebar-btn" onclick="document.getElementById('file-chooser').click()">
                 <span id="file-name-display">Upload ZIP Folder</span>
             </button>
             <input type="file" id="file-chooser" style="display:none" onchange="updateFileName(this)"/>
-
             <button id="upload-button" class="sidebar-btn deploy-btn">Deploy Audit Engine</button>
             <div id="loader" class="loader"></div>
-
             <div class="processing-notice">
                 ✨ <b>Audit Progress:</b> Building a comprehensive multi-layer analysis may take <b>60 to 90 seconds</b> to ensure complete architectural accuracy.
             </div>
@@ -133,7 +149,6 @@
                 <div id="w-4" class="widget-content"></div>
                 <div id="w-5" class="widget-content"></div>
                 <div id="w-6" class="widget-content"></div>
-
                 <div id="w-7" class="widget-content">
                     <div class="chat-outer">
                         <div class="chat-instr">
@@ -166,17 +181,13 @@
         IdentityPoolId: 'ap-south-1:2d3fed8e-b3ce-41a3-a779-4896ea437e16'
     });
 
-    // ── FIX 1: Explicit endpoint prevents SDK appending :$LATEST qualifier ──
     const lambdaClient = new AWS.Lambda({
         region:   'ap-south-1',
         endpoint: 'https://lambda.ap-south-1.amazonaws.com'
     });
-
     const s3Client   = new AWS.S3();
     const statusText = document.getElementById('status');
     const loader     = document.getElementById('loader');
-
-    // ── FIX 2: Centralised name — change here if your function name differs ──
     const LAMBDA_FUNCTION_NAME = 'codelens-upload-validator';
 
     let currentFileName = "";
@@ -221,8 +232,40 @@
         if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); askDoubt(); }
     });
 
+    /* ── SCORE BAR BUILDER ── */
+    function buildScoreView(rawText, label) {
+        // Extract SCORE: X/10 from the text
+        const scoreMatch = rawText.match(/SCORE:\s*(\d+(\.\d+)?)\/10/i);
+        const score = scoreMatch ? parseFloat(scoreMatch[1]) : null;
+
+        // Strip the SCORE line from the body text
+        const bodyText = clean(rawText.replace(/SCORE:\s*\d+(\.\d+)?\/10/i, '').trim());
+
+        let scoreHTML = '';
+        if (score !== null) {
+            const pct = (score / 10) * 100;
+            const colorClass = score >= 7 ? 'score-high' : score >= 5 ? 'score-mid' : 'score-low';
+            const fillClass  = score >= 7 ? 'fill-high'  : score >= 5 ? 'fill-mid'  : 'fill-low';
+            scoreHTML = `
+                <div class="score-header">
+                    <span class="score-label">${label}</span>
+                    <span class="score-number ${colorClass}">${score}<span style="font-size:0.9rem;color:#64748b">/10</span></span>
+                    <div class="score-bar-wrap">
+                        <div class="score-bar-fill ${fillClass}" style="width: ${pct}%"></div>
+                    </div>
+                </div>`;
+        }
+
+        return `${scoreHTML}<div class="rich-content">${bodyText}</div>`;
+    }
+
+    /* ── RICH CONTENT BUILDER (for Explanation & Optimize) ── */
+    function buildRichView(text) {
+        return `<div class="rich-content">${clean(text)}</div>`;
+    }
+
     /* ════════════════════════════════════════
-       CHAT — askDoubt()
+       CHAT
        ════════════════════════════════════════ */
     async function askDoubt() {
         const input   = document.getElementById('doubt-input');
@@ -230,82 +273,41 @@
         const history = document.getElementById('chat-history');
         const noProj  = document.getElementById('chat-no-project');
         const query   = input.value.trim();
-
         if (!query) return;
-
-        if (!currentFileName) {
-            noProj.style.display = 'block';
-            return;
-        }
+        if (!currentFileName) { noProj.style.display = 'block'; return; }
         noProj.style.display = 'none';
-
         appendMessage(history, query, 'user');
         input.value = '';
         input.disabled = true;
         sendBtn.disabled = true;
-
         const thinkingEl = appendThinking(history);
         chatHistory.push({ role: 'user', content: query });
-
         try {
-            const payload = {
-                user_query:   query,
-                file_name:    currentFileName,
-                chat_history: chatHistory.slice(-6)
-            };
-
-            // ── FIX 3: Use lambdaClient with explicit endpoint, no Qualifier field ──
             const result = await lambdaClient.invoke({
                 FunctionName:   LAMBDA_FUNCTION_NAME,
                 InvocationType: 'RequestResponse',
-                Payload:        JSON.stringify(payload)
+                Payload:        JSON.stringify({ user_query: query, file_name: currentFileName, chat_history: chatHistory.slice(-6) })
             }).promise();
-
             thinkingEl.remove();
-
-            // ── FIX 4: Robust double-parse handles all SDK response shapes ──
             let parsed, body;
             try {
-                parsed = typeof result.Payload === 'string'
-                    ? JSON.parse(result.Payload)
-                    : result.Payload;
-                body = typeof parsed.body === 'string'
-                    ? JSON.parse(parsed.body)
-                    : parsed.body;
-            } catch (parseErr) {
-                appendMessage(history, '⚠️ Could not parse response. Check Lambda logs.', 'ai');
-                console.error('Parse error:', parseErr, result);
-                input.disabled = false;
-                sendBtn.disabled = false;
-                return;
-            }
-
+                parsed = typeof result.Payload === 'string' ? JSON.parse(result.Payload) : result.Payload;
+                body   = typeof parsed.body === 'string' ? JSON.parse(parsed.body) : parsed.body;
+            } catch(e) { appendMessage(history, '⚠️ Could not parse response.', 'ai'); return; }
             if (parsed.statusCode === 200 && body && body.chat_answer) {
                 appendMessage(history, body.chat_answer, 'ai');
                 chatHistory.push({ role: 'assistant', content: body.chat_answer });
             } else {
-                const errMsg = (body && body.chat_answer) || (body && body.error) || 'Unknown error from Lambda.';
-                appendMessage(history, `⚠️ ${errMsg}`, 'ai');
-                console.error('Lambda error response:', parsed);
+                appendMessage(history, `⚠️ ${(body && body.error) || 'Unknown error.'}`, 'ai');
             }
-
         } catch (err) {
             thinkingEl.remove();
-            // ── FIX 5: Friendly error messages instead of raw AWS ARN strings ──
-            let friendlyMsg;
-            if (err.message.includes('not authorized'))
-                friendlyMsg = '⚠️ Permission error. The IAM user is missing lambda:InvokeFunction. Check IAM policy.';
-            else if (err.message.includes('Function not found'))
-                friendlyMsg = `⚠️ Lambda function "${LAMBDA_FUNCTION_NAME}" not found. Verify the exact name in AWS Lambda console.`;
-            else
-                friendlyMsg = `⚠️ Error: ${err.message}`;
-            appendMessage(history, friendlyMsg, 'ai');
-            console.error('Chat invoke error:', err);
+            const msg = err.message.includes('not authorized') ? '⚠️ Permission error. Check IAM policy.'
+                      : err.message.includes('Function not found') ? `⚠️ Lambda "${LAMBDA_FUNCTION_NAME}" not found.`
+                      : `⚠️ Error: ${err.message}`;
+            appendMessage(history, msg, 'ai');
         }
-
-        input.disabled = false;
-        sendBtn.disabled = false;
-        input.focus();
+        input.disabled = false; sendBtn.disabled = false; input.focus();
         history.scrollTop = history.scrollHeight;
     }
 
@@ -317,7 +319,6 @@
         container.scrollTop = container.scrollHeight;
         return div;
     }
-
     function appendThinking(container) {
         const div = document.createElement('div');
         div.className = 'chat-msg ai-msg thinking';
@@ -333,28 +334,21 @@
         const level = document.getElementById('user-level').value;
         if (!file) return alert("Select ZIP first.");
         currentFileName = file.name;
-
         chatHistory = [];
         document.getElementById('chat-history').innerHTML = '';
         document.getElementById('chat-no-project').style.display = 'none';
-
         loader.style.display = "block";
         statusText.innerText = "STATUS: UPLOADING";
-
         s3Client.putObject({
-            Bucket:      'codelens-uploads-rishabh-2026',
-            Key:         file.name,
-            ContentType: file.type,
-            Body:        file,
-            Metadata:    { 'user-level': level }
+            Bucket: 'codelens-uploads-rishabh-2026', Key: file.name,
+            ContentType: file.type, Body: file, Metadata: { 'user-level': level }
         }, () => pollForResults(file.name));
     });
 
     function pollForResults(fileName) {
         const docClient = new AWS.DynamoDB.DocumentClient();
-        let attempts    = 0;
+        let attempts = 0;
         const MAX_ATTEMPTS = 60;
-
         const interval = setInterval(() => {
             attempts++;
             if (attempts > MAX_ATTEMPTS) {
@@ -364,14 +358,12 @@
                 alert("Analysis timed out. Please try again.");
                 return;
             }
-
             docClient.get({ TableName: "CodeLensResults", Key: { "fileName": fileName } }, (err, data) => {
                 if (data && data.Item) {
                     clearInterval(interval);
                     loader.style.display = "none";
                     statusText.innerText = "STATUS: SYNCED";
                     const raw = data.Item.analysis;
-
                     document.querySelector('.nav-btn[data-target="w-1"]').click();
 
                     const getSection = (n, m) => {
@@ -384,12 +376,14 @@
                         const s = t.indexOf(`[${g}]:`);
                         if (s === -1) return "Content Finalizing...";
                         const cs = s + g.length + 3;
-                        const e  = t.indexOf("[", cs);
-                        return clean(t.substring(cs, e === -1 ? t.length : e));
+                        const e  = t.indexOf("\n[", cs);
+                        return t.substring(cs, e === -1 ? t.length : e).trim();
                     };
 
+                    // 1. Visualizer
                     document.getElementById('w-1').innerText = clean(getSection(1, 2)).replace(/\|—/g, ' └─');
 
+                    // 2. Explanation — rich text rendering
                     const exp = getSection(2, 3);
                     document.getElementById('w-2').innerHTML = `
                         <div class="sub-btn-container">
@@ -397,18 +391,18 @@
                             <button class="sub-btn" onclick="showSubView('w-2', 'e2', this)">Logic Flow</button>
                             <button class="sub-btn" onclick="showSubView('w-2', 'e3', this)">Analogies</button>
                         </div>
-                        <div id="e1" class="sub-view active">${getTagged(exp, 'OVERVIEW')}</div>
-                        <div id="e2" class="sub-view">${getTagged(exp, 'LOGIC_AND_CONNECTIVITY')}</div>
-                        <div id="e3" class="sub-view">${getTagged(exp, 'REAL_WORLD_ANALOGIES')}</div>
+                        <div id="e1" class="sub-view active">${buildRichView(getTagged(exp, 'OVERVIEW'))}</div>
+                        <div id="e2" class="sub-view">${buildRichView(getTagged(exp, 'LOGIC_AND_CONNECTIVITY'))}</div>
+                        <div id="e3" class="sub-view">${buildRichView(getTagged(exp, 'REAL_WORLD_ANALOGIES'))}</div>
                     `;
 
+                    // 3. Simulator Tree
                     const traceRaw = getSection(3, 4);
                     const simRoot  = document.getElementById('w-3');
                     simRoot.innerHTML = `<div class="simulator-instr"><strong>🕹️ Simulator:</strong> Deep-tracing project architecture.</div><div id="sim-tree-container"></div>`;
                     const treeContainer = document.getElementById('sim-tree-container');
                     let lastNodes = { 0: treeContainer };
-                    const traceLines = traceRaw.split('\n').filter(l => l.includes('|'));
-                    traceLines.forEach(line => {
+                    traceRaw.split('\n').filter(l => l.includes('|')).forEach(line => {
                         let depth = 0;
                         if (line.trim().startsWith('....')) depth = 2;
                         else if (line.trim().startsWith('..')) depth = 1;
@@ -434,14 +428,49 @@
                         lastNodes[depth] = node;
                     });
 
+                    // 4. Optimize — rich text rendering
                     const opt = getSection(4, 5);
-                    document.getElementById('w-4').innerHTML = `<div class="sub-btn-container"><button class="sub-btn active" onclick="showSubView('w-4', 'o1', this)">Naming</button><button class="sub-btn" onclick="showSubView('w-4', 'o2', this)">Logic</button><button class="sub-btn" onclick="showSubView('w-4', 'o3', this)">Security</button><button class="sub-btn" onclick="showSubView('w-4', 'o4', this)">Optimization</button><button class="sub-btn" onclick="showSubView('w-4', 'o5', this)">Pattern</button></div><div id="o1" class="sub-view active">${getTagged(opt, 'BAD_NAMING')}</div><div id="o2" class="sub-view">${getTagged(opt, 'DUPLICATE_LOGIC')}</div><div id="o3" class="sub-view">${getTagged(opt, 'SECURITY_RISKS')}</div><div id="o4" class="sub-view">${getTagged(opt, 'OPTIMIZATION_SUGGESTIONS')}</div><div id="o5" class="sub-view">${getTagged(opt, 'BETTER_ARCHITECTURE')}</div>`;
+                    document.getElementById('w-4').innerHTML = `
+                        <div class="sub-btn-container">
+                            <button class="sub-btn active" onclick="showSubView('w-4', 'o1', this)">Naming</button>
+                            <button class="sub-btn" onclick="showSubView('w-4', 'o2', this)">Logic</button>
+                            <button class="sub-btn" onclick="showSubView('w-4', 'o3', this)">Security</button>
+                            <button class="sub-btn" onclick="showSubView('w-4', 'o4', this)">Optimization</button>
+                            <button class="sub-btn" onclick="showSubView('w-4', 'o5', this)">Pattern</button>
+                        </div>
+                        <div id="o1" class="sub-view active">${buildRichView(getTagged(opt, 'BAD_NAMING'))}</div>
+                        <div id="o2" class="sub-view">${buildRichView(getTagged(opt, 'DUPLICATE_LOGIC'))}</div>
+                        <div id="o3" class="sub-view">${buildRichView(getTagged(opt, 'SECURITY_RISKS'))}</div>
+                        <div id="o4" class="sub-view">${buildRichView(getTagged(opt, 'OPTIMIZATION_SUGGESTIONS'))}</div>
+                        <div id="o5" class="sub-view">${buildRichView(getTagged(opt, 'BETTER_ARCHITECTURE'))}</div>`;
 
+                    // 5. Health — score bars + rich text
                     const hl = getSection(5, 6);
-                    document.getElementById('w-5').innerHTML = `<div class="sub-btn-container"><button class="sub-btn active" onclick="showSubView('w-5', 'h1', this)">Readability</button><button class="sub-btn" onclick="showSubView('w-5', 'h2', this)">Modularity</button><button class="sub-btn" onclick="showSubView('w-5', 'h3', this)">Security</button><button class="sub-btn" onclick="showSubView('w-5', 'h4', this)">Coverage</button></div><div id="h1" class="sub-view active">${getTagged(hl, 'READABILITY')}</div><div id="h2" class="sub-view">${getTagged(hl, 'MODULARITY')}</div><div id="h3" class="sub-view">${getTagged(hl, 'SECURITY')}</div><div id="h4" class="sub-view">${getTagged(hl, 'TEST_COVERAGE')}</div>`;
+                    document.getElementById('w-5').innerHTML = `
+                        <div class="sub-btn-container">
+                            <button class="sub-btn active" onclick="showSubView('w-5', 'h1', this)">Readability</button>
+                            <button class="sub-btn" onclick="showSubView('w-5', 'h2', this)">Modularity</button>
+                            <button class="sub-btn" onclick="showSubView('w-5', 'h3', this)">Security</button>
+                            <button class="sub-btn" onclick="showSubView('w-5', 'h4', this)">Coverage</button>
+                        </div>
+                        <div id="h1" class="sub-view active">${buildScoreView(getTagged(hl, 'READABILITY'),   'Readability Score')}</div>
+                        <div id="h2" class="sub-view">${buildScoreView(getTagged(hl, 'MODULARITY'),   'Modularity Score')}</div>
+                        <div id="h3" class="sub-view">${buildScoreView(getTagged(hl, 'SECURITY'),     'Security Score')}</div>
+                        <div id="h4" class="sub-view">${buildScoreView(getTagged(hl, 'TEST_COVERAGE'),'Test Coverage Score')}</div>`;
 
+                    // 6. Mentor
                     const mn = getSection(6, null);
-                    document.getElementById('w-6').innerHTML = `<div class="sub-btn-container"><button class="sub-btn active" onclick="showSubView('w-6', 'm1', this)">Interview Qs</button><button class="sub-btn" onclick="showSubView('w-6', 'm2', this)">System Design</button><button class="sub-btn" onclick="showSubView('w-6', 'm3', this)">Resume</button><button class="sub-btn" onclick="showSubView('w-6', 'm4', this)">Viva</button></div><div id="m1" class="sub-view active">${getTagged(mn, 'INTERVIEW_QS')}</div><div id="m2" class="sub-view">${getTagged(mn, 'SYSTEM_DESIGN')}</div><div id="m3" class="sub-view">${getTagged(mn, 'RESUME_BULLETS')}</div><div id="m4" class="sub-view">${getTagged(mn, 'VIVA_QS')}</div>`;
+                    document.getElementById('w-6').innerHTML = `
+                        <div class="sub-btn-container">
+                            <button class="sub-btn active" onclick="showSubView('w-6', 'm1', this)">Interview Qs</button>
+                            <button class="sub-btn" onclick="showSubView('w-6', 'm2', this)">System Design</button>
+                            <button class="sub-btn" onclick="showSubView('w-6', 'm3', this)">Resume</button>
+                            <button class="sub-btn" onclick="showSubView('w-6', 'm4', this)">Viva</button>
+                        </div>
+                        <div id="m1" class="sub-view active">${buildRichView(getTagged(mn, 'INTERVIEW_QS'))}</div>
+                        <div id="m2" class="sub-view">${buildRichView(getTagged(mn, 'SYSTEM_DESIGN'))}</div>
+                        <div id="m3" class="sub-view">${buildRichView(getTagged(mn, 'RESUME_BULLETS'))}</div>
+                        <div id="m4" class="sub-view">${buildRichView(getTagged(mn, 'VIVA_QS'))}</div>`;
                 }
             });
         }, 3000);
