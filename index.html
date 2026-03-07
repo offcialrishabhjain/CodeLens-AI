@@ -34,73 +34,24 @@
         .widget-content { display: none; animation: fadeIn 0.4s ease; white-space: pre-wrap; line-height: 1.7; color: #4ade80; }
         .widget-content.active { display: block; }
 
-        /* ── CHAT SECTION ── */
         #w-7 { white-space: normal; }
         .chat-outer { display: flex; flex-direction: column; height: 100%; gap: 12px; }
-
         .chat-instr { background: rgba(56, 189, 248, 0.05); border: 1px solid rgba(56, 189, 248, 0.3); padding: 12px 16px; border-radius: 12px; font-size: 0.75rem; color: #94a3b8; line-height: 1.5; flex-shrink: 0; }
         .chat-instr strong { color: #38bdf8; }
-
-        #chat-history {
-            flex: 1;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            padding: 12px;
-            border: 1px solid rgba(56, 189, 248, 0.15);
-            border-radius: 14px;
-            background: rgba(15, 23, 42, 0.5);
-            min-height: 0;
-        }
-
-        .chat-msg {
-            padding: 10px 14px;
-            border-radius: 10px;
-            font-size: 0.82rem;
-            line-height: 1.6;
-            max-width: 85%;
-            word-break: break-word;
-            white-space: pre-wrap;
-            font-family: 'Inter', sans-serif;
-        }
+        #chat-history { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding: 12px; border: 1px solid rgba(56, 189, 248, 0.15); border-radius: 14px; background: rgba(15, 23, 42, 0.5); min-height: 0; }
+        .chat-msg { padding: 10px 14px; border-radius: 10px; font-size: 0.82rem; line-height: 1.6; max-width: 85%; word-break: break-word; white-space: pre-wrap; font-family: 'Inter', sans-serif; }
         .user-msg { background: rgba(56, 189, 248, 0.12); color: #7dd3fc; border: 1px solid rgba(56,189,248,0.3); align-self: flex-end; border-bottom-right-radius: 3px; }
         .ai-msg   { background: rgba(16, 185, 129, 0.1);  color: #6ee7b7; border: 1px solid rgba(16,185,129,0.25); align-self: flex-start; border-bottom-left-radius: 3px; }
         .ai-msg.thinking { color: #64748b; font-style: italic; }
-
         .chat-input-row { display: flex; gap: 10px; flex-shrink: 0; }
-        .chat-input-row input {
-            flex: 1;
-            background: #0f172a;
-            border: 1px solid #334155;
-            color: #f8fafc;
-            padding: 12px 16px;
-            border-radius: 10px;
-            font-size: 0.85rem;
-            outline: none;
-            font-family: 'Inter', sans-serif;
-            transition: border-color 0.2s;
-        }
+        .chat-input-row input { flex: 1; background: #0f172a; border: 1px solid #334155; color: #f8fafc; padding: 12px 16px; border-radius: 10px; font-size: 0.85rem; outline: none; font-family: 'Inter', sans-serif; transition: border-color 0.2s; }
         .chat-input-row input:focus { border-color: #38bdf8; }
         .chat-input-row input::placeholder { color: #475569; }
-        .chat-send-btn {
-            background: #38bdf8;
-            color: #0f172a;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 10px;
-            font-weight: 800;
-            font-size: 0.85rem;
-            cursor: pointer;
-            transition: 0.2s;
-            white-space: nowrap;
-        }
+        .chat-send-btn { background: #38bdf8; color: #0f172a; border: none; padding: 12px 20px; border-radius: 10px; font-weight: 800; font-size: 0.85rem; cursor: pointer; transition: 0.2s; white-space: nowrap; }
         .chat-send-btn:hover  { background: #7dd3fc; }
         .chat-send-btn:disabled { background: #334155; color: #64748b; cursor: not-allowed; }
-
         #chat-no-project { color: #ef4444; font-size: 0.75rem; text-align: center; display: none; padding: 8px; background: rgba(239,68,68,0.08); border-radius: 8px; border: 1px solid rgba(239,68,68,0.2); }
 
-        /* Other existing styles */
         .sub-btn-container { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; border-bottom: 1px solid #334155; padding-bottom: 15px; }
         .sub-btn { background: rgba(56, 189, 248, 0.1); border: 1px solid #38bdf8; color: #38bdf8; padding: 8px 15px; border-radius: 8px; font-size: 0.7rem; cursor: pointer; transition: 0.2s; font-weight: bold; text-transform: uppercase; }
         .sub-btn:hover, .sub-btn.active { background: #38bdf8; color: #0f172a; }
@@ -123,8 +74,6 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
         .loader { border: 3px solid #334155; border-top: 3px solid #38bdf8; border-radius: 50%; width: 25px; height: 25px; animation: spin 1s linear infinite; margin: 10px auto; display: none; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-        /* Typing dots */
         .typing-dots span { display: inline-block; width: 6px; height: 6px; margin: 0 2px; background: #4ade80; border-radius: 50%; animation: bounce 1.2s infinite; }
         .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
         .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
@@ -185,7 +134,6 @@
                 <div id="w-5" class="widget-content"></div>
                 <div id="w-6" class="widget-content"></div>
 
-                <!-- ── DOUBTS CHAT TAB ── -->
                 <div id="w-7" class="widget-content">
                     <div class="chat-outer">
                         <div class="chat-instr">
@@ -218,13 +166,22 @@
         secretAccessKey: 'GQkSgiES18GZakWKqI0s/Hd75/5LRTEq9jl/4o0A',
         region:          'ap-south-1'
     });
-    const s3Client  = new AWS.S3();
-    const lambda    = new AWS.Lambda();
+
+    // ── FIX 1: Explicit endpoint prevents SDK appending :$LATEST qualifier ──
+    const lambdaClient = new AWS.Lambda({
+        region:   'ap-south-1',
+        endpoint: 'https://lambda.ap-south-1.amazonaws.com'
+    });
+
+    const s3Client   = new AWS.S3();
     const statusText = document.getElementById('status');
     const loader     = document.getElementById('loader');
 
-    let currentFileName = "";   // set after upload
-    let chatHistory     = [];   // multi-turn memory [{role, content}, ...]
+    // ── FIX 2: Centralised name — change here if your function name differs ──
+    const LAMBDA_FUNCTION_NAME = 'CodeLensBackend';
+
+    let currentFileName = "";
+    let chatHistory     = [];
 
     /* ── UI HELPERS ── */
     function clean(text) { return text.replace(/[#*]/g, '').trim(); }
@@ -261,7 +218,6 @@
 
     function updateFileName(input) { document.getElementById('file-name-display').innerText = input.files[0].name; }
 
-    /* ── ENTER KEY SUPPORT FOR CHAT ── */
     document.getElementById('doubt-input').addEventListener('keydown', function(e) {
         if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); askDoubt(); }
     });
@@ -270,64 +226,82 @@
        CHAT — askDoubt()
        ════════════════════════════════════════ */
     async function askDoubt() {
-        const input    = document.getElementById('doubt-input');
-        const sendBtn  = document.getElementById('chat-send-btn');
-        const history  = document.getElementById('chat-history');
-        const noProj   = document.getElementById('chat-no-project');
-        const query    = input.value.trim();
+        const input   = document.getElementById('doubt-input');
+        const sendBtn = document.getElementById('chat-send-btn');
+        const history = document.getElementById('chat-history');
+        const noProj  = document.getElementById('chat-no-project');
+        const query   = input.value.trim();
 
         if (!query) return;
 
-        // Warn if no project uploaded yet
         if (!currentFileName) {
             noProj.style.display = 'block';
             return;
         }
         noProj.style.display = 'none';
 
-        // Render user bubble
         appendMessage(history, query, 'user');
         input.value = '';
         input.disabled = true;
         sendBtn.disabled = true;
 
-        // Thinking indicator
         const thinkingEl = appendThinking(history);
-
-        // Add to local history
         chatHistory.push({ role: 'user', content: query });
 
-        // Invoke Lambda
         try {
             const payload = {
                 user_query:   query,
                 file_name:    currentFileName,
-                chat_history: chatHistory.slice(-6)  // last 6 turns
+                chat_history: chatHistory.slice(-6)
             };
 
-            const result = await lambda.invoke({
-                FunctionName:   'CodeLensBackend',   // ← your Lambda function name
+            // ── FIX 3: Use lambdaClient with explicit endpoint, no Qualifier field ──
+            const result = await lambdaClient.invoke({
+                FunctionName:   LAMBDA_FUNCTION_NAME,
                 InvocationType: 'RequestResponse',
                 Payload:        JSON.stringify(payload)
             }).promise();
 
             thinkingEl.remove();
 
-            const parsed = JSON.parse(result.Payload);
-            const body   = JSON.parse(parsed.body);
+            // ── FIX 4: Robust double-parse handles all SDK response shapes ──
+            let parsed, body;
+            try {
+                parsed = typeof result.Payload === 'string'
+                    ? JSON.parse(result.Payload)
+                    : result.Payload;
+                body = typeof parsed.body === 'string'
+                    ? JSON.parse(parsed.body)
+                    : parsed.body;
+            } catch (parseErr) {
+                appendMessage(history, '⚠️ Could not parse response. Check Lambda logs.', 'ai');
+                console.error('Parse error:', parseErr, result);
+                input.disabled = false;
+                sendBtn.disabled = false;
+                return;
+            }
 
-            if (parsed.statusCode === 200 && body.chat_answer) {
-                const answer = body.chat_answer;
-                appendMessage(history, answer, 'ai');
-                chatHistory.push({ role: 'assistant', content: answer });
+            if (parsed.statusCode === 200 && body && body.chat_answer) {
+                appendMessage(history, body.chat_answer, 'ai');
+                chatHistory.push({ role: 'assistant', content: body.chat_answer });
             } else {
-                appendMessage(history, '⚠️ Could not get a response. Please try again.', 'ai');
+                const errMsg = (body && body.chat_answer) || (body && body.error) || 'Unknown error from Lambda.';
+                appendMessage(history, `⚠️ ${errMsg}`, 'ai');
+                console.error('Lambda error response:', parsed);
             }
 
         } catch (err) {
             thinkingEl.remove();
-            appendMessage(history, `⚠️ Error: ${err.message}`, 'ai');
-            console.error('Chat error:', err);
+            // ── FIX 5: Friendly error messages instead of raw AWS ARN strings ──
+            let friendlyMsg;
+            if (err.message.includes('not authorized'))
+                friendlyMsg = '⚠️ Permission error. The IAM user is missing lambda:InvokeFunction. Check IAM policy.';
+            else if (err.message.includes('Function not found'))
+                friendlyMsg = `⚠️ Lambda function "${LAMBDA_FUNCTION_NAME}" not found. Verify the exact name in AWS Lambda console.`;
+            else
+                friendlyMsg = `⚠️ Error: ${err.message}`;
+            appendMessage(history, friendlyMsg, 'ai');
+            console.error('Chat invoke error:', err);
         }
 
         input.disabled = false;
@@ -361,7 +335,6 @@
         if (!file) return alert("Select ZIP first.");
         currentFileName = file.name;
 
-        // Reset chat state for new project
         chatHistory = [];
         document.getElementById('chat-history').innerHTML = '';
         document.getElementById('chat-no-project').style.display = 'none';
@@ -381,7 +354,7 @@
     function pollForResults(fileName) {
         const docClient = new AWS.DynamoDB.DocumentClient();
         let attempts    = 0;
-        const MAX_ATTEMPTS = 60;  // 3-min timeout (60 × 3s)
+        const MAX_ATTEMPTS = 60;
 
         const interval = setInterval(() => {
             attempts++;
@@ -416,10 +389,8 @@
                         return clean(t.substring(cs, e === -1 ? t.length : e));
                     };
 
-                    // 1. Visualizer
                     document.getElementById('w-1').innerText = clean(getSection(1, 2)).replace(/\|—/g, ' └─');
 
-                    // 2. Explanation
                     const exp = getSection(2, 3);
                     document.getElementById('w-2').innerHTML = `
                         <div class="sub-btn-container">
@@ -432,7 +403,6 @@
                         <div id="e3" class="sub-view">${getTagged(exp, 'REAL_WORLD_ANALOGIES')}</div>
                     `;
 
-                    // 3. Simulator Tree
                     const traceRaw = getSection(3, 4);
                     const simRoot  = document.getElementById('w-3');
                     simRoot.innerHTML = `<div class="simulator-instr"><strong>🕹️ Simulator:</strong> Deep-tracing project architecture.</div><div id="sim-tree-container"></div>`;
@@ -465,15 +435,12 @@
                         lastNodes[depth] = node;
                     });
 
-                    // 4. Optimize
                     const opt = getSection(4, 5);
                     document.getElementById('w-4').innerHTML = `<div class="sub-btn-container"><button class="sub-btn active" onclick="showSubView('w-4', 'o1', this)">Naming</button><button class="sub-btn" onclick="showSubView('w-4', 'o2', this)">Logic</button><button class="sub-btn" onclick="showSubView('w-4', 'o3', this)">Security</button><button class="sub-btn" onclick="showSubView('w-4', 'o4', this)">Optimization</button><button class="sub-btn" onclick="showSubView('w-4', 'o5', this)">Pattern</button></div><div id="o1" class="sub-view active">${getTagged(opt, 'BAD_NAMING')}</div><div id="o2" class="sub-view">${getTagged(opt, 'DUPLICATE_LOGIC')}</div><div id="o3" class="sub-view">${getTagged(opt, 'SECURITY_RISKS')}</div><div id="o4" class="sub-view">${getTagged(opt, 'OPTIMIZATION_SUGGESTIONS')}</div><div id="o5" class="sub-view">${getTagged(opt, 'BETTER_ARCHITECTURE')}</div>`;
 
-                    // 5. Health
                     const hl = getSection(5, 6);
                     document.getElementById('w-5').innerHTML = `<div class="sub-btn-container"><button class="sub-btn active" onclick="showSubView('w-5', 'h1', this)">Readability</button><button class="sub-btn" onclick="showSubView('w-5', 'h2', this)">Modularity</button><button class="sub-btn" onclick="showSubView('w-5', 'h3', this)">Security</button><button class="sub-btn" onclick="showSubView('w-5', 'h4', this)">Coverage</button></div><div id="h1" class="sub-view active">${getTagged(hl, 'READABILITY')}</div><div id="h2" class="sub-view">${getTagged(hl, 'MODULARITY')}</div><div id="h3" class="sub-view">${getTagged(hl, 'SECURITY')}</div><div id="h4" class="sub-view">${getTagged(hl, 'TEST_COVERAGE')}</div>`;
 
-                    // 6. Mentor
                     const mn = getSection(6, null);
                     document.getElementById('w-6').innerHTML = `<div class="sub-btn-container"><button class="sub-btn active" onclick="showSubView('w-6', 'm1', this)">Interview Qs</button><button class="sub-btn" onclick="showSubView('w-6', 'm2', this)">System Design</button><button class="sub-btn" onclick="showSubView('w-6', 'm3', this)">Resume</button><button class="sub-btn" onclick="showSubView('w-6', 'm4', this)">Viva</button></div><div id="m1" class="sub-view active">${getTagged(mn, 'INTERVIEW_QS')}</div><div id="m2" class="sub-view">${getTagged(mn, 'SYSTEM_DESIGN')}</div><div id="m3" class="sub-view">${getTagged(mn, 'RESUME_BULLETS')}</div><div id="m4" class="sub-view">${getTagged(mn, 'VIVA_QS')}</div>`;
                 }
