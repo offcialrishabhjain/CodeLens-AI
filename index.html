@@ -1100,7 +1100,7 @@
     let currentFileName = "";
     let chatHistory = [];
 
-    function clean(text) { return (text || '').replace(/[#*]/g, '').trim(); }
+    function clean(text) { return (text || '').replace(/[#]/g, '').trim(); }
 
     function setStatus(state, label) {
         const dot = document.getElementById('status-dot');
@@ -1121,7 +1121,7 @@
         ['', '  extracting source code snippets...'],
         ['accent', '  [ OK ] code context assembled'],
         ['', '  tokenising input for model...'],
-        ['bright', '> INVOKING BEDROCK — amazon.nova-micro'],
+        ['bright', '> INVOKING BEDROCK — amazon.nova-lite'],
         ['', '  dispatching inference request...'],
         ['', '  waiting for model response...'],
         ['accent', '  [ OK ] model acknowledged'],
@@ -1307,9 +1307,6 @@
     function pollForResults(fileName) {
         const docClient = new AWS.DynamoDB.DocumentClient();
         let attempts = 0;
-        // FIX: start polling later — first attempt at 15s since Bedrock
-        // needs at minimum 30-60s for a 250K context analysis.
-        // Subsequent attempts use gentler backoff to avoid burning retries early.
         const INITIAL_DELAY_MS = 15000;
         const BASE_MS          = 5000;
         const CAP_MS           = 15000;
@@ -1340,81 +1337,84 @@
             });
         }
 
-        // FIX: wait 15s before first poll attempt instead of hitting DynamoDB
-        // immediately when the model hasn't even started responding yet.
         setTimeout(poll, INITIAL_DELAY_MS);
     }
 
-    /* ── PARSERS ── */
+    /* ── PARSERS (FIXED) ── */
 
     function getSection(raw, n, m) {
-        // Strategy 1: strict match  ### N. Title:
-        // Strategy 2: loose match   ### N  (any punctuation or none)
-        // Strategy 3: fallback      just the number alone on a line
-        // Tries each in order and uses the first that works.
-        const patterns = [
-            new RegExp(`###\\s*${n}[\\s\\.:\\-\\)]`, 'i'),
-            new RegExp(`##\\s*${n}[\\s\\.:\\-\\)]`, 'i'),
-            new RegExp(`\\b${n}\\s*\\.\\s*[A-Z]`, 'i'),
+        // Tries 3 header formats: ### N., ## N., plain N. at line start
+        // Handles all casing and punctuation variants the model may produce
+        const startPatterns = [
+            new RegExp(`###\\s*${n}[\\s\\.:)\\-]`, 'i'),
+            new RegExp(`##\\s*${n}[\\s\\.:)\\-]`, 'i'),
+            new RegExp(`^${n}[\\s\\.:)\\-]`, 'im'),
         ];
-        const endPatterns = m ? [
-            new RegExp(`###\\s*${m}[\\s\\.:\\-\\)]`, 'i'),
-            new RegExp(`##\\s*${m}[\\s\\.:\\-\\)]`, 'i'),
-            new RegExp(`\\b${m}\\s*\\.\\s*[A-Z]`, 'i'),
-            /\[END_OF_ANALYSIS\]/i,
-        ] : [/\[END_OF_ANALYSIS\]/i];
 
-        let startMatch = null;
-        for (const pat of patterns) {
-            startMatch = raw.match(pat);
-            if (startMatch) break;
-        }
-        if (!startMatch) return null;
-
-        // Move past the header line entirely to get to content
-        const headerLineEnd = raw.indexOf('\n', startMatch.index);
-        let contentStart = headerLineEnd !== -1 ? headerLineEnd + 1 : startMatch.index + startMatch[0].length;
-
-        // Find where this section ends
-        let endIdx = raw.length;
-        for (const epat of endPatterns) {
-            const endMatch = raw.slice(contentStart).match(epat);
-            if (endMatch) {
-                endIdx = Math.min(endIdx, contentStart + endMatch.index);
+        let startIdx = -1;
+        for (const pat of startPatterns) {
+            const match = raw.match(pat);
+            if (match) {
+                // Skip past the entire header line to get to content
+                const lineEnd = raw.indexOf('\n', match.index);
+                startIdx = lineEnd !== -1 ? lineEnd + 1 : match.index + match[0].length;
+                break;
             }
         }
+        if (startIdx === -1) return null;
 
-        const result = raw.substring(contentStart, endIdx).trim();
-        return result.length > 20 ? result : null;
+        let endIdx = raw.length;
+        if (m) {
+            const endPatterns = [
+                new RegExp(`###\\s*${m}[\\s\\.:)\\-]`, 'i'),
+                new RegExp(`##\\s*${m}[\\s\\.:)\\-]`, 'i'),
+                new RegExp(`^${m}[\\s\\.:)\\-]`, 'im'),
+                /\[END_OF_ANALYSIS\]/i,
+            ];
+            for (const pat of endPatterns) {
+                const slice = raw.slice(startIdx);
+                const match = slice.match(pat);
+                if (match) endIdx = Math.min(endIdx, startIdx + match.index);
+            }
+        } else {
+            const endMatch = raw.slice(startIdx).match(/\[END_OF_ANALYSIS\]/i);
+            if (endMatch) endIdx = startIdx + endMatch.index;
+        }
+
+        const result = raw.substring(startIdx, endIdx).trim();
+        return result.length > 10 ? result : null;
     }
 
     function getTagged(text, tag) {
         if (!text) return null;
-        // Try multiple tag formats Nova Micro might produce:
-        // [TAG]: content
-        // [TAG] content (no colon)
-        // TAG: content (no brackets)
-        // **TAG**: content (bold markdown)
-        const patterns = [
-            new RegExp('\\[' + tag + '\\]\\s*:?\\s*', 'i'),
-            new RegExp('\\*\\*\\[?' + tag + '\\]?\\*\\*\\s*:?\\s*', 'i'),
-            new RegExp('\\b' + tag + '\\b\\s*:?\\s*', 'i'),
+
+        // Handles [TAG]:, [TAG] (no colon), **[TAG]**, **TAG**, plain TAG:
+        const tagPatterns = [
+            new RegExp(`\\[${tag}\\]\\s*:?\\s*`, 'i'),
+            new RegExp(`\\*\\*\\[?${tag}\\]?\\*\\*\\s*:?\\s*`, 'i'),
+            new RegExp(`^${tag}\\s*:?\\s*`, 'im'),
         ];
 
-        let match = null;
-        for (const pat of patterns) {
-            match = text.match(pat);
-            if (match) break;
+        let matchIdx = -1, matchLen = 0;
+        for (const pat of tagPatterns) {
+            const m = text.match(pat);
+            if (m) { matchIdx = m.index; matchLen = m[0].length; break; }
         }
-        if (!match) return null;
+        if (matchIdx === -1) return null;
 
-        const contentStart = match.index + match[0].length;
-        // Next tag boundary — look for [NEXT_TAG] or **NEXT_TAG** pattern
-        const nextTagMatch = text.slice(contentStart).search(/\n\s*\[|\n\s*\*\*/);
-        const endIdx = nextTagMatch !== -1 ? contentStart + nextTagMatch : text.length;
+        const contentStart = matchIdx + matchLen;
+        const remaining = text.slice(contentStart);
+
+        // Next boundary = [ALL_CAPS_TAG] or **ALL_CAPS_TAG** at the start of a line
+        // Requires 3+ uppercase chars/underscores to avoid false positives on inline brackets
+        const nextTagPattern = /\n\s*\[([A-Z_]{3,})\]|\n\s*\*\*\[?([A-Z_]{3,})\]?\*\*/g;
+        const nextMatch = nextTagPattern.exec(remaining);
+        const endIdx = nextMatch ? contentStart + nextMatch.index : text.length;
+
         const result = text.substring(contentStart, endIdx).trim();
         return result.length > 5 ? result : null;
     }
+
     function safeRich(text, label) {
         if (text && text.trim()) return `<div class="rich-content">${clean(text)}</div>`;
         return `<div class="parse-error">⚠ COULD NOT EXTRACT [ ${label.toUpperCase()} ] — FORMAT UNEXPECTED OR STILL LOADING</div>`;
