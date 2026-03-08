@@ -22,22 +22,22 @@ Millions of developers are learning to code — but reading and understanding re
 
 | # | Feature | What it does |
 |---|---------|-------------|
-| 01 | **Architecture Visualizer** | Auto-generates a dependency tree and architecture map from your code using static analysis |
+| 01 | **Architecture Visualizer** | Auto-generates a codebase architecture tree |
 | 02 | **AI Explanation** | Explains the entire codebase in **ELI5**, **Technical**, or **Expert** mode — tailored to your level |
-| 03 | **Execution Simulator** | Traces call graphs and variable flow statically — understand how code runs without executing it |
+| 03 | **Execution Simulator** | LLM-generated execution walkthrough; understand how code runs without executing it |
 | 04 | **Code Optimizer** | Detects naming issues, duplicate logic, security vulnerabilities, and performance bottlenecks with specific fixes |
 | 05 | **Health Score** | Scores the codebase across Readability, Modularity, Security, and Test Coverage — each out of 10 |
 | 06 | **Mentor** | Gives interview and viva questions, and gives points for resume and about system design |
 | 07 | **Doubts Chat** | Ask anything about your uploaded project — context-aware Q&A powered by Amazon Nova |
+| 08 | **Zero Setup** | Works directly in the browser — no cloning, installing, or running code locally |
 
 ---
 
 ## ⚙️ How It Works
 
 ```
-Developer uploads ZIP or pastes GitHub URL
-            ↓
-    AWS Lambda validates & stores to S3
+    Developer uploads ZIP (direct S3 via SDK + Cognito)
+    OR pastes GitHub URL (codelens-github-fetcher λ downloads & stores to S3)
             ↓
     S3 event triggers codelens-upload-validator λ
             ↓
@@ -98,10 +98,8 @@ Developer uploads ZIP or pastes GitHub URL
 
 - **Multi-model fallback** — 3 models × 3 retries = up to 9 inference attempts before a hard error
 - **Exponential backoff** — 1s → 2s → 4s (capped at 8s) per model on `ThrottlingException`
-- **GitHub API branch resolution** — queries `api.github.com` for the real `default_branch`; falls back to HEAD checks for `main`, `master`, `develop`, `trunk` if the API is rate-limited
 - **Chunked download** — 64 KB chunks with live byte-count enforcement, not just `Content-Length` header trust
 - **ZIP magic byte validation** — rejects non-ZIP files even if `.zip` extension is present
-- **DynamoDB polling** — initial 15s delay, then exponential backoff at 1.4× multiplier, 15s cap, 30 max attempts
 - **Context window management** — 250,000 char limit; files priority-sorted (source code → config → markup) and capped at top 50; visible truncation banner shown when limit is hit
 
 ---
