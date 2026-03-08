@@ -1470,7 +1470,7 @@
         const s6 = getSection(raw, 6, null);
 
         const bannerHTML = wasTruncated
-        ? `<div class="trunc-banner" style="display:block">⚠ LARGE REPO DETECTED — CODEBASE EXCEEDED ANALYSIS LIMIT. RESULTS REFLECT FIRST ~150,000 CHARACTERS. FILES PRIORITISED BY TYPE: SOURCE CODE FIRST, THEN CONFIG, THEN MARKUP.</div>`
+        ? `<div class="trunc-banner" style="display:block">⚠ LARGE REPO DETECTED — CODEBASE EXCEEDED ANALYSIS LIMIT FOR PROTOTYPE. RESULTS REFLECT TOP 50 FILES UP TO ~250,000 CHARACTERS. FILES PRIORITISED BY TYPE: SOURCE CODE FIRST, THEN CONFIG, THEN MARKUP.</div>`
         : '';
 
         const sHead = (num, title) =>
