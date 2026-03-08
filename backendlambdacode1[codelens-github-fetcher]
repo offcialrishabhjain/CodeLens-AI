@@ -1,0 +1,193 @@
+import json
+import boto3
+import urllib.request
+import urllib.error
+import re
+import uuid
+
+s3 = boto3.client('s3')
+BUCKET_NAME = 'codelens-uploads-rishabh-2026'
+MAX_ZIP_BYTES = 50 * 1024 * 1024  # 50 MB hard cap
+
+
+def lambda_handler(event, context):
+    """
+    Accepts a GitHub repo URL, downloads the ZIP archive,
+    uploads it to S3 (triggering the existing analysis pipeline).
+
+    Expected event:
+    {
+        "repo_url": "https://github.com/user/repo",
+        "user_level": "Intermediate"
+    }
+    """
+    try:
+        repo_url   = event.get('repo_url', '').strip().rstrip('/')
+        user_level = event.get('user_level', 'Intermediate')
+
+        # ── 1. VALIDATE URL ──
+        if not repo_url:
+            return _err("No repo URL provided.")
+
+        # Allow with or without https:// prefix
+        if not repo_url.startswith('http'):
+            repo_url = 'https://' + repo_url
+
+        pattern = r'https?://github\.com/([^/]+)/([^/\s?#]+)'
+        match = re.match(pattern, repo_url)
+        if not match:
+            return _err("Invalid GitHub URL. Please use: https://github.com/username/repository")
+
+        owner = match.group(1)
+        repo  = match.group(2).replace('.git', '')
+
+        # ── 2. UNIQUE KEY to prevent collisions between users ──
+        unique_id = uuid.uuid4().hex[:8]
+
+        # ── 3. RESOLVE BRANCH via GitHub API (FIX #1) ──
+        # Fetches the actual default branch instead of guessing main/master
+        branch, zip_url = _resolve_branch(owner, repo)
+        if branch is None:
+            return _err(f"Repository '{owner}/{repo}' not found or is private. Make sure it is public.")
+
+        zip_name = f"{owner}-{repo}-{branch}-{unique_id}.zip"
+
+        # ── 4. DOWNLOAD ZIP (with size guard) ──
+        try:
+            req = urllib.request.Request(
+                zip_url,
+                headers={'User-Agent': 'CodeLensAI/1.0'}
+            )
+            with urllib.request.urlopen(req, timeout=25) as response:
+                # Check Content-Length header first to avoid downloading huge repos
+                content_length = response.headers.get('Content-Length')
+                if content_length and int(content_length) > MAX_ZIP_BYTES:
+                    return _err(
+                        f"Repository ZIP is too large ({int(content_length) // (1024*1024)} MB). "
+                        f"Maximum allowed size is {MAX_ZIP_BYTES // (1024*1024)} MB."
+                    )
+
+                # Read in chunks so we can enforce the size cap even without Content-Length
+                chunks = []
+                bytes_read = 0
+                while True:
+                    chunk = response.read(65536)  # 64 KB chunks
+                    if not chunk:
+                        break
+                    bytes_read += len(chunk)
+                    if bytes_read > MAX_ZIP_BYTES:
+                        return _err(
+                            f"Repository ZIP exceeds the {MAX_ZIP_BYTES // (1024*1024)} MB size limit."
+                        )
+                    chunks.append(chunk)
+
+                zip_data = b''.join(chunks)
+
+                if len(zip_data) < 100:
+                    return _err(f"Repository not found or is empty: {owner}/{repo}")
+
+                if zip_data[:4] != b'PK\x03\x04':
+                    return _err(f"Downloaded file is not a valid ZIP. The repository may be empty or inaccessible.")
+
+        except urllib.error.HTTPError as e:
+            return _err(f"HTTP error {e.code} while downloading repository.")
+        except urllib.error.URLError as e:
+            return _err(f"Network error: {str(e.reason)}")
+
+        # ── 5. UPLOAD TO S3 ──
+        s3.put_object(
+            Bucket=BUCKET_NAME,
+            Key=zip_name,
+            Body=zip_data,
+            ContentType='application/zip',
+            Metadata={'user-level': user_level}
+        )
+
+        return {
+            'statusCode': 200,
+            'body': json.dumps({
+                'message': 'Repository downloaded and queued for analysis.',
+                'fileName': zip_name,
+                'owner': owner,
+                'repo': repo,
+                'branch': branch
+            })
+        }
+
+    except Exception as e:
+        print(f"GITHUB_FETCH_ERROR: {str(e)}")
+        return _err(f"Unexpected error: {str(e)}")
+
+
+def _resolve_branch(owner, repo):
+    """
+    FIX #1 — Branch Resolution via GitHub API.
+
+    Previously tried only 'main' then 'master' with HEAD requests,
+    silently failing for repos with any other default branch (develop,
+    trunk, production, etc.).
+
+    Now queries the GitHub REST API to get the actual default_branch
+    field, then falls back to the old HEAD-check approach only if the
+    API call itself fails (network error, rate limit, etc.).
+
+    Returns (branch_name, zip_url) or (None, None) if repo not found/private.
+    """
+
+    # ── PRIMARY: GitHub API lookup ──
+    api_url = f"https://api.github.com/repos/{owner}/{repo}"
+    try:
+        req = urllib.request.Request(
+            api_url,
+            headers={
+                'User-Agent': 'CodeLensAI/1.0',
+                'Accept': 'application/vnd.github+json'
+            }
+        )
+        with urllib.request.urlopen(req, timeout=10) as r:
+            if r.status == 200:
+                data   = json.loads(r.read().decode('utf-8'))
+                branch = data.get('default_branch')
+                if branch:
+                    zip_url = f"https://github.com/{owner}/{repo}/archive/refs/heads/{branch}.zip"
+                    print(f"BRANCH_RESOLVED_VIA_API: {owner}/{repo} -> {branch}")
+                    return branch, zip_url
+    except urllib.error.HTTPError as e:
+        if e.code == 404:
+            # Repo genuinely doesn't exist or is private — don't bother falling back
+            print(f"BRANCH_RESOLVE_404: {owner}/{repo}")
+            return None, None
+        # Other HTTP errors (403 rate limit, 5xx) — fall through to HEAD fallback
+        print(f"BRANCH_RESOLVE_API_HTTP_ERR: {e.code} for {owner}/{repo}, trying HEAD fallback")
+    except Exception as e:
+        # Network timeout or parse error — fall through to HEAD fallback
+        print(f"BRANCH_RESOLVE_API_ERR: {str(e)} for {owner}/{repo}, trying HEAD fallback")
+
+    # ── FALLBACK: HEAD requests for common branch names ──
+    # Covers edge cases where GitHub API is rate-limited or unreachable
+    for branch in ('main', 'master', 'develop', 'trunk'):
+        zip_url = f"https://github.com/{owner}/{repo}/archive/refs/heads/{branch}.zip"
+        try:
+            req = urllib.request.Request(
+                zip_url,
+                headers={'User-Agent': 'CodeLensAI/1.0'},
+                method='HEAD'
+            )
+            with urllib.request.urlopen(req, timeout=10) as r:
+                ct = r.headers.get('Content-Type', '')
+                if r.status == 200 and 'html' not in ct:
+                    print(f"BRANCH_RESOLVED_VIA_HEAD: {owner}/{repo} -> {branch}")
+                    return branch, zip_url
+        except urllib.error.HTTPError:
+            continue
+        except urllib.error.URLError:
+            continue
+
+    return None, None
+
+
+def _err(msg):
+    return {
+        'statusCode': 400,
+        'body': json.dumps({'error': msg})
+    }
