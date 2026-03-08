@@ -1363,7 +1363,7 @@
             const body   = typeof parsed.body === 'string' ? JSON.parse(parsed.body) : parsed.body;
             if (parsed.statusCode === 200 && body.fileName) {
                 currentFileName = body.fileName;
-                showGithubStatus('success', `✓ ${body.owner}/${body.repo} — ANALYSING...`);
+                showGithubStatus('success', `✓ ${body.owner}/${body.repo} [${body.branch}] — ANALYSING...`);
                 pollForResults(currentFileName);
             } else {
                 setLoading(false);
