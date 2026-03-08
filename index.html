@@ -1477,11 +1477,9 @@
         // 1. Visualizer
         document.getElementById('w-1').innerHTML = bannerHTML +
             sHead('01', 'Architecture Visualizer') +
-            `<div class="viz-tree"></div>`);
-        (function(){
-            const treeEl = document.getElementById('w-1').querySelector('.viz-tree');
-            if (treeEl) treeEl.textContent = s1 ? cleanTree(s1) : '⚠ ARCHITECTURE DATA UNAVAILABLE';
-        })();
+            '<div class="viz-tree"></div>';
+        document.getElementById('w-1').querySelector('.viz-tree').textContent =
+            s1 ? cleanTree(s1) : '⚠ ARCHITECTURE DATA UNAVAILABLE';
 
         // 2. Explanation
         document.getElementById('w-2').innerHTML = bannerHTML +
