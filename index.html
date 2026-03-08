@@ -693,13 +693,13 @@
             font-size: 0.78rem;
             line-height: 1.8;
             color: var(--beige);
-            white-space: pre;          /* pre keeps tree alignment exact */
-            overflow-x: auto;          /* horizontal scroll for wide trees */
+            white-space: pre;
+            overflow-x: auto;
             background: var(--bg-panel);
             border: 1px solid var(--border-mid);
             border-left: 3px solid var(--crimson);
             padding: 24px;
-            max-height: 75vh;          /* scroll instead of infinite page growth */
+            max-height: 75vh;
             overflow-y: auto;
         }
         .viz-tree::-webkit-scrollbar { width: 4px; height: 4px; }
@@ -1358,7 +1358,7 @@
         setTimeout(poll, INITIAL_DELAY_MS);
     }
 
-    /* ── PARSERS (FIXED) ── */
+    /* ── PARSERS ── */
 
     // Stores the complete raw AI response so getTagged can search it directly
     // as a fallback when getSection fails to isolate a section boundary
@@ -1411,8 +1411,6 @@
 
     function getTagged(text, tag) {
         // Try on the given section text first, then fall back to the full raw output.
-        // This means even if getSection fails to isolate section 4, the [BAD_NAMING]
-        // etc. tags are still found directly in the complete model response.
         const sources = [];
         if (text && text.trim()) sources.push(text);
         if (_rawGlobal) sources.push(_rawGlobal);
@@ -1462,10 +1460,20 @@
         const s1 = getSection(raw, 1, 2);
         const s2 = getSection(raw, 2, 3);
         const s3 = getSection(raw, 3, 4);
-        const s4 = getSection(raw, 4, 5);
+        let   s4 = getSection(raw, 4, 5);
         const s5 = getSection(raw, 5, 6);
         const s6 = getSection(raw, 6, null);
 
+        // ── FIX: Strip any leaked "5. Repo Health Score" section heading from s4 ──
+        // When the model outputs the section 5 title inside the [BETTER_ARCHITECTURE]
+        // block (e.g. "### 5. Repo Health Score"), getSection's boundary regex may
+        // miss it, causing the heading to render at the bottom of the Architecture tab.
+        // This trim cuts s4 off at the first occurrence of a "5." section marker.
+        if (s4) {
+            const leakPat = /\n\s*(?:###\s*|##\s*|\*\*\s*)?5[\s\.:)\-]/m;
+            const leakMatch = s4.match(leakPat);
+            if (leakMatch) s4 = s4.substring(0, leakMatch.index).trim();
+        }
 
         const bannerHTML = wasTruncated
             ? `<div class="trunc-banner" style="display:block">⚠ LARGE REPO DETECTED — CODEBASE EXCEEDED ANALYSIS LIMIT FOR PROTOTYPE. RESULTS REFLECT TOP 50 FILES UP TO ~250,000 CHARACTERS. FILES PRIORITISED BY TYPE: SOURCE CODE FIRST, THEN CONFIG, THEN MARKUP.</div>`
