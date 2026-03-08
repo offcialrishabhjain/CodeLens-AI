@@ -693,12 +693,17 @@
             font-size: 0.78rem;
             line-height: 1.8;
             color: var(--beige);
-            white-space: pre-wrap;
+            white-space: pre;          /* pre keeps tree alignment exact */
+            overflow-x: auto;          /* horizontal scroll for wide trees */
             background: var(--bg-panel);
             border: 1px solid var(--border-mid);
             border-left: 3px solid var(--crimson);
             padding: 24px;
+            max-height: 75vh;          /* scroll instead of infinite page growth */
+            overflow-y: auto;
         }
+        .viz-tree::-webkit-scrollbar { width: 4px; height: 4px; }
+        .viz-tree::-webkit-scrollbar-thumb { background: var(--border-mid); }
 
         .score-card {
             background: var(--bg-panel);
@@ -1101,6 +1106,19 @@
     let chatHistory = [];
 
     function clean(text) { return (text || '').replace(/[#]/g, '').trim(); }
+    // cleanTree: for architecture tree — preserve ALL symbols, only strip markdown headers
+    function cleanTree(text) {
+        if (!text) return '';
+        return text
+            .split('\n')
+            .map(line => {
+                // Remove markdown header markers at line start only (## Folder, ### File etc)
+                // but KEEP the rest of the line including tree drawing chars
+                return line.replace(/^\s*#{1,6}\s+/, '');
+            })
+            .join('\n')
+            .trim();
+    }
 
     function setStatus(state, label) {
         const dot = document.getElementById('status-dot');
@@ -1459,7 +1477,11 @@
         // 1. Visualizer
         document.getElementById('w-1').innerHTML = bannerHTML +
             sHead('01', 'Architecture Visualizer') +
-            `<div class="viz-tree">${s1 ? clean(s1).replace(/\|—/g, ' └─') : '⚠ ARCHITECTURE DATA UNAVAILABLE'}</div>`;
+            `<div class="viz-tree"></div>`);
+        (function(){
+            const treeEl = document.getElementById('w-1').querySelector('.viz-tree');
+            if (treeEl) treeEl.textContent = s1 ? cleanTree(s1) : '⚠ ARCHITECTURE DATA UNAVAILABLE';
+        })();
 
         // 2. Explanation
         document.getElementById('w-2').innerHTML = bannerHTML +
