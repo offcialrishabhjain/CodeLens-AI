@@ -154,7 +154,3 @@ codelens-github-fetcher     # GitHub URL resolver and ZIP downloader
 Region: `AP-SOUTH-1` · Build: `2026.03`
 
 ---
-
-<div align="center">
-  <sub>Built with ❤️ for the developers of Bharat · Powered by AWS · Amazon Bedrock · Amazon Nova</sub>
-</div>
