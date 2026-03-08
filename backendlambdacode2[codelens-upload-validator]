@@ -1,0 +1,437 @@
+import json
+import boto3
+import zipfile
+import io
+import datetime
+import urllib.parse
+import time
+import uuid
+from botocore.exceptions import ClientError
+
+# Initialize Clients
+bedrock = boto3.client('bedrock-runtime', region_name='ap-south-1')
+bedrock_fallback = boto3.client('bedrock-runtime', region_name='us-east-1')  # cross-region escape hatch
+s3 = boto3.client('s3')
+dynamodb = boto3.resource('dynamodb')
+table = dynamodb.Table('CodeLensResults')
+
+# ── FIX #4A — Raised context window from 80,000 to 250,000 chars ──
+MAX_CODE_CONTEXT  = 250000  # was 80000
+CONTEXT_WARN_MARK = 225000  # was 72000
+
+# ── FIX #2 — Raised per-file byte cap from 5,000 to 15,000 ──
+# Allows complete function bodies and class definitions to be read
+# instead of cutting off mid-logic
+SOURCE_FILE_CAP = 15000     # was 5000
+
+# ── FIX #5 — Raised low-value file cap and added JSON whitelist ──
+# Critical config files like package.json, tsconfig.json, requirements.txt
+# previously got only 1,000 bytes — often not even enough for full deps list
+LOW_VALUE_CAP    = 1000     # retained for truly low-value files (html, xml, md, txt)
+JSON_DEFAULT_CAP = 3000     # new: raised cap for all JSON files
+# Whitelisted JSON/config filenames get full SOURCE_FILE_CAP reads
+JSON_WHITELIST = {
+    'package.json', 'package-lock.json', 'tsconfig.json', 'tsconfig.base.json',
+    'jsconfig.json', 'requirements.txt', 'pyproject.toml', 'setup.py', 'setup.cfg',
+    'cargo.toml', 'go.mod', 'go.sum', 'pom.xml', 'build.gradle', 'gemfile',
+    'composer.json', '.env.example', 'dockerfile', 'docker-compose.yml',
+    'docker-compose.yaml', 'makefile', 'config.json', 'settings.json',
+    'appsettings.json', 'serverless.yml', 'serverless.yaml', 'sam.yaml',
+    'sam.yml', 'template.yaml', 'template.yml', 'cdk.json'
+}
+
+# ── FIX #3 — Trimmed folder blocklist ──
+# Removed legitimate source folders: tools, knowledge_base, skills,
+# roles, docs, images, static, assets
+# Kept only genuinely junk/generated folders
+SKIP_FOLDERS = {
+    'node_modules', '__pycache__', '.git', 'dist', 'build',
+    'vendor', '.next', '.nuxt', 'coverage', '.pytest_cache',
+    '.mypy_cache', 'venv', '.venv', 'env', 'eggs',
+    'htmlcov', '.tox', 'buck-out', '_build', '.cache'
+}
+
+# File extensions that are always binary/generated — never useful
+SKIP_EXTENSIONS = {
+    '.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.webp',
+    '.pdf', '.woff', '.woff2', '.ttf', '.eot',
+    '.zip', '.gz', '.lock', '.map', '.min.js', '.min.css',
+    '.pyc', '.pyo', '.class', '.o', '.so', '.dll', '.exe',
+    '.DS_Store', '.bin', '.dat'
+}
+
+# Extensions that get LOW_VALUE_CAP (not worth reading deeply)
+LOW_VALUE_EXTENSIONS = {'.css', '.html', '.xml', '.md', '.txt', '.svg'}
+
+# ── FILE PRIORITY ORDER for context window filling (FIX #4A companion) ──
+# When context fills up, we want the most architecturally significant files
+# seen first. This extension priority ensures the AI sees real source before
+# configs before markup.
+EXTENSION_PRIORITY = {
+    # Tier 1 — Core source code (highest priority)
+    '.py': 1, '.js': 1, '.ts': 1, '.tsx': 1, '.jsx': 1,
+    '.go': 1, '.rs': 1, '.java': 1, '.kt': 1, '.swift': 1,
+    '.c': 1, '.cpp': 1, '.cs': 1, '.rb': 1, '.php': 1,
+    '.scala': 1, '.ex': 1, '.exs': 1, '.clj': 1, '.hs': 1,
+    # Tier 2 — Config and build files
+    '.json': 2, '.toml': 2, '.yaml': 2, '.yml': 2,
+    '.env': 2, '.cfg': 2, '.ini': 2, '.conf': 2,
+    # Tier 3 — Markup and docs (lowest priority)
+    '.html': 3, '.css': 3, '.md': 3, '.txt': 3, '.xml': 3,
+}
+
+def _get_priority(filename):
+    """Return sort priority for a file. Lower = higher priority."""
+    ext = '.' + filename.rsplit('.', 1)[-1].lower() if '.' in filename else ''
+    return EXTENSION_PRIORITY.get(ext, 2)  # unknown extensions get tier 2
+
+
+# ── BEDROCK RESILIENCE ──
+# Nova Lite requires the regional inference profile prefix in ap-south-1
+# Nova Micro uses the apac cross-region prefix as before
+BEDROCK_MODELS = [
+    ('apac.amazon.nova-lite-v1:0',        bedrock),           # primary  — Nova Lite, apac cross-region profile
+    ('us-east-1.amazon.nova-lite-v1:0',   bedrock_fallback),  # fallback — Nova Lite, us-east-1 profile
+    ('apac.amazon.nova-micro-v1:0',       bedrock),           # last resort — Nova Micro if Lite throttled
+]
+BEDROCK_RETRIES      = 3
+BEDROCK_INITIAL_WAIT = 1
+BEDROCK_MAX_WAIT     = 8
+
+
+def invoke_bedrock(body):
+    """
+    Call Bedrock with exponential back-off retry across BEDROCK_MODELS.
+    Tries each model up to BEDROCK_RETRIES times before falling back to the next.
+    Third entry uses a cross-region client (us-east-1) to escape regional throttles.
+    Uses botocore.ClientError for client-agnostic exception handling — safe across
+    all regional client instances regardless of which boto3 client raised the error.
+    Raises the last exception if all models and retries are exhausted.
+    """
+    last_exc = None
+    for model_id, client in BEDROCK_MODELS:
+        wait = BEDROCK_INITIAL_WAIT
+        for attempt in range(BEDROCK_RETRIES):
+            try:
+                response = client.invoke_model(
+                    modelId=model_id,
+                    body=body,
+                    contentType="application/json"
+                )
+                if attempt > 0 or (model_id, client) != BEDROCK_MODELS[0]:
+                    print(f"BEDROCK_SUCCESS: model={model_id}, attempt={attempt+1}")
+                return response
+            except ClientError as e:
+                error_code = e.response['Error']['Code']
+                last_exc = e
+                if error_code == 'ThrottlingException':
+                    if attempt < BEDROCK_RETRIES - 1:
+                        print(f"BEDROCK_THROTTLE: model={model_id}, attempt={attempt+1}, waiting {wait}s")
+                        time.sleep(wait)
+                        wait = min(wait * 2, BEDROCK_MAX_WAIT)
+                elif error_code in ('ModelErrorException', 'InternalServerException', 'ServiceUnavailableException'):
+                    print(f"BEDROCK_MODEL_ERROR: model={model_id}, attempt={attempt+1}, err={str(e)}")
+                    break
+                else:
+                    print(f"BEDROCK_UNEXPECTED_ERROR: model={model_id}, code={error_code}, err={str(e)}")
+                    raise
+        print(f"BEDROCK_FALLBACK: exhausted retries for {model_id}, trying next model.")
+    raise last_exc
+
+
+def lambda_handler(event, context):
+
+    # ─────────────────────────────────────────────
+    # ROUTE 1: DOUBTS CHAT (invoked directly from frontend)
+    # ─────────────────────────────────────────────
+    if 'user_query' in event:
+        return handle_chat(event)
+
+    # ─────────────────────────────────────────────
+    # ROUTE 2: S3 TRIGGER (full codebase analysis)
+    # ─────────────────────────────────────────────
+    try:
+        time.sleep(2)
+
+        # 1. Get S3 Event Details
+        bucket  = event['Records'][0]['s3']['bucket']['name']
+        raw_key = event['Records'][0]['s3']['object']['key']
+        key     = urllib.parse.unquote_plus(raw_key)
+
+        # 2. FILE DISCOVERY & METADATA EXTRACTION
+        try:
+            response   = s3.get_object(Bucket=bucket, Key=key)
+            user_level = response.get('Metadata', {}).get('user-level', 'Intermediate')
+        except s3.exceptions.NoSuchKey:
+            objs        = s3.list_objects_v2(Bucket=bucket, MaxKeys=5)
+            sorted_objs = sorted(objs.get('Contents', []), key=lambda x: x['LastModified'], reverse=True)
+            if not sorted_objs:
+                raise Exception("Bucket is empty.")
+            key        = sorted_objs[0]['Key']
+            response   = s3.get_object(Bucket=bucket, Key=key)
+            user_level = response.get('Metadata', {}).get('user-level', 'Intermediate')
+
+        # 3. ZIP PROCESSING
+        zip_data     = response['Body'].read()
+        raw_snippets = []  # list of (priority, text) tuples for sorting
+
+        with zipfile.ZipFile(io.BytesIO(zip_data)) as z:
+            for info in z.infolist():
+                if info.is_dir() or info.filename.startswith('__MACOSX'):
+                    continue
+
+                fname_lower = info.filename.lower()
+                fname_base  = fname_lower.split('/')[-1]  # just the filename, no path
+
+                # ── FIX #3: Trimmed blocklist — only skip genuinely junk folders ──
+                path_parts = set(fname_lower.replace('\\', '/').split('/'))
+                if path_parts & SKIP_FOLDERS:
+                    continue
+
+                # Skip binary and generated file extensions
+                # Handle compound extensions like .min.js
+                skip = False
+                for ext in SKIP_EXTENSIONS:
+                    if fname_lower.endswith(ext):
+                        skip = True
+                        break
+                if skip:
+                    continue
+
+                # Determine read limit for this file
+                # ── FIX #5: JSON whitelist + raised caps ──
+                if fname_base in JSON_WHITELIST:
+                    # Critical config files get full source-level read
+                    limit = SOURCE_FILE_CAP
+                elif any(fname_lower.endswith(ext) for ext in ('.json', '.toml', '.yaml', '.yml', '.cfg', '.ini', '.conf', '.env')):
+                    # All other JSON/config gets raised cap (was 1000, now 3000)
+                    limit = JSON_DEFAULT_CAP
+                elif any(fname_lower.endswith(ext) for ext in LOW_VALUE_EXTENSIONS):
+                    # Markup, docs, plain text — still low cap
+                    limit = LOW_VALUE_CAP
+                else:
+                    # ── FIX #2: Source files get 15,000 bytes (was 5,000) ──
+                    limit = SOURCE_FILE_CAP
+
+                with z.open(info.filename) as f:
+                    snippet = f.read(limit).decode('utf-8', errors='ignore')
+
+                priority = _get_priority(fname_lower)
+                raw_snippets.append((priority, f"FILE: {info.filename}\nCODE:\n{snippet}\n---"))
+
+        # ── FIX #4A companion: Sort by priority before building context ──
+        # Ensures source code files fill the context window before configs
+        # and markup, so the AI sees the most important files even when truncated
+        raw_snippets.sort(key=lambda x: x[0])
+        # ── FIX B — Cap at top 50 files after priority sort ──
+        # Prevents context explosion on large repos. The priority sort above
+        # guarantees the best 50 files are kept, not just the first 50 alphabetically.
+        raw_snippets = raw_snippets[:50]
+        file_details = [text for _, text in raw_snippets]
+
+        raw_context   = "\n".join(file_details)
+        was_truncated = len(raw_context) > MAX_CODE_CONTEXT
+        code_context  = raw_context[:MAX_CODE_CONTEXT]
+
+        truncation_notice = ""
+        if was_truncated:
+            total_files   = len(file_details)
+            chars_dropped = len(raw_context) - MAX_CODE_CONTEXT
+            truncation_notice = (
+                f"\n\n[NOTICE: Codebase was large. {chars_dropped:,} characters across {total_files} files "
+                f"were truncated. Analysis reflects the first {MAX_CODE_CONTEXT:,} characters only. "
+                f"Files were prioritised by type: source code first, then config, then markup.]\n"
+            )
+            print(f"TRUNCATION_WARNING: key={key}, total_chars={len(raw_context)}, files={total_files}")
+
+        # 4. ANALYSIS PROMPT (unchanged — all original sections preserved)
+        prompt_text = f"""
+You are CodeLens AI - an elite software architect and senior code reviewer.
+The user's experience level is: {user_level}.
+CRITICAL: Analyze the following source code snippets from the uploaded project to provide your response.
+CODE CONTEXT:
+{code_context}
+{truncation_notice}
+
+CRITICAL UI INSTRUCTIONS:
+1. DO NOT use '#' or '*' symbols in the body text.
+2. DO NOT use random dashes (-) for decoration.
+3. Use plain text and clear spacing.
+4. Be DETAILED and THOROUGH. Each section must have substantial, specific content based on the actual code.
+
+MANDATORY RESPONSE FORMAT (Numbered 1-6):
+
+### 1. Architecture Visualizer:
+Construct a clean flowchart-style text tree of the files provided above. Use |— and └─ symbols.
+
+### 2. Automated Codebase Explanation:
+CRITICAL: Each tag below MUST contain at least 4-6 sentences of detailed, specific content about THIS codebase. Do not be vague or generic.
+
+[OVERVIEW]: Write a thorough 4-6 sentence summary covering: what the project does, its primary purpose, the main technologies used, the overall architecture pattern, and who would use it. Reference specific file names and function names from the code.
+
+[LOGIC_AND_CONNECTIVITY]: Write a detailed 4-6 sentence explanation covering: how each file connects to the others, the exact data flow from input to output, which functions call which, what data is passed between modules, and how the system handles errors. Be specific about the actual code structure.
+
+[REAL_WORLD_ANALOGIES]: Write 3-4 sentences with a vivid, creative real-world analogy that maps the actual components of this specific codebase to something relatable. Then explain exactly how each part of the analogy maps to a specific file or function.
+
+### 3. Execution Trace Simulator Data:
+Every '>>' MUST be followed by at least 2 '..' lines. No exceptions.
+INSTRUCTION:
+1. Count the number of files in the CODE CONTEXT.
+2. State "TOTAL FILES FOUND: [X]" at the top of this section.
+3. List EVERY one of those [X] files using the '>>' marker.
+INVENTORY REQUIREMENT: You MUST perform a complete scan.
+Identify EVERY unique file name in the CODE CONTEXT above.
+For EVERY SINGLE FILE found, you MUST create a '>>' entry.
+DO NOT summarize. If a file exists in the context, it MUST appear here.
+CRITICAL: For EVERY file identified with '>>', you MUST provide the internal breakdown.
+- If it's a script: List the main functions using '..'.
+- If it's a class: List the methods using '..'.
+- If it's a simple config: List the key settings using '..'.
+STRUCTURE RULE:
+>> [File Name] | EXPLANATION: [Purpose]
+.. [Function/Method/Key] | EXPLANATION: [Logic]
+.... [Detailed Step] | EXPLANATION: [Sub-logic]
+
+### 4. Repo Optimization:
+CRITICAL: Each tag below MUST contain at least 5-8 specific, actionable points based on the ACTUAL code. Quote specific variable names, function names, or file names from the code. Do not give generic advice.
+
+[BAD_NAMING]: Identify at least 5 specific naming issues in the actual code. For each one, quote the current bad name and suggest an improved name with a reason. Cover variables, functions, files, and classes.
+
+[DUPLICATE_LOGIC]: Identify at least 4 specific instances of duplicated or redundant logic in the actual code. Quote the specific lines or functions involved. Suggest exactly how to refactor each one.
+
+[SECURITY_RISKS]: Identify at least 5 specific security vulnerabilities in this codebase. Reference the exact file and line or function where each risk exists. Explain the potential exploit and the exact fix needed.
+
+[OPTIMIZATION_SUGGESTIONS]: Provide at least 6 specific performance improvements for this code. For each one, reference the exact function or file, explain why it's slow or inefficient, and describe the exact optimization to apply.
+
+[BETTER_ARCHITECTURE]: Suggest at least 5 specific architectural improvements. For each one, explain what pattern or technique to use, which specific part of the code it applies to, and what benefit it would provide.
+
+### 5. Repo Health Score:
+CRITICAL FORMAT RULE: Every health tag MUST start with a SCORE on the very first line in this exact format:
+SCORE: [number]/10
+Then follow with at least 4-6 sentences of detailed analysis.
+
+[READABILITY]: 
+SCORE: [X]/10
+Write 4-6 sentences analyzing the actual readability of this codebase. Cover: variable naming clarity, comment quality and quantity, code structure, function length, and how easy it would be for a new developer to understand this code. Reference specific files and functions.
+
+[MODULARITY]:
+SCORE: [X]/10
+Write 4-6 sentences analyzing the modularity of this codebase. Cover: separation of concerns, function size and single responsibility, coupling between modules, reusability of components, and what specific changes would improve modularity. Reference specific files.
+
+[SECURITY]:
+SCORE: [X]/10
+Write 4-6 sentences analyzing the security posture of this codebase. Cover: input validation, authentication/authorization, data exposure risks, dependency security, and the most critical security fixes needed. Reference specific files and functions.
+
+[TEST_COVERAGE]:
+SCORE: [X]/10
+Write 4-6 sentences analyzing the test coverage of this codebase. Cover: presence or absence of unit tests, integration tests, what percentage of code appears tested, which critical functions lack tests, and a specific testing strategy recommendation for this project.
+
+### 6. Interview Mentor:
+[INTERVIEW_QS]: 5 technical questions.
+[SYSTEM_DESIGN]: High-level design explanation.
+[RESUME_BULLETS]: 3 high-impact points.
+[VIVA_QS]: 5 project viva questions.
+[END_OF_ANALYSIS]
+"""
+
+        # 5. CALL AMAZON NOVA
+        body = json.dumps({
+            "messages": [{"role": "user", "content": [{"text": prompt_text}]}],
+            "inferenceConfig": {
+                "max_new_tokens": 6144,
+                "temperature": 0.1
+            }
+        })
+        ai_response = invoke_bedrock(body)
+        result_text = json.loads(ai_response.get('body').read())['output']['message']['content'][0]['text']
+
+        # 6. SAVE TO DYNAMODB
+        table.put_item(Item={
+            'fileName':    key,
+            'analysis':    result_text,
+            'codeContext': code_context,
+            'truncated':   was_truncated,
+            'timestamp':   str(datetime.datetime.now())
+        })
+
+        return {'statusCode': 200, 'body': json.dumps({'analysis': result_text})}
+
+    except Exception as e:
+        print(f"CRITICAL_ERROR: {str(e)}")
+        return {'statusCode': 500, 'body': json.dumps({'error': str(e)})}
+
+
+# ─────────────────────────────────────────────────────────────────
+# CHAT HANDLER — unchanged from original
+# ─────────────────────────────────────────────────────────────────
+def handle_chat(event):
+    try:
+        user_query   = event.get('user_query', '').strip()
+        file_name    = event.get('file_name', '').strip()
+        chat_history = event.get('chat_history', [])
+
+        if not user_query:
+            return {'statusCode': 400, 'body': json.dumps({'error': 'Empty query.'})}
+
+        code_context     = ""
+        analysis_summary = ""
+        if file_name:
+            try:
+                db_resp          = table.get_item(Key={'fileName': file_name})
+                item             = db_resp.get('Item', {})
+                code_context     = item.get('codeContext', '')[:8000]
+                analysis_summary = item.get('analysis', '')[:3000]
+            except Exception as fetch_err:
+                print(f"DynamoDB fetch error: {fetch_err}")
+
+        system_context = f"""You are CodeLens AI — a helpful, concise code assistant.
+The user has uploaded a project. Use the code and analysis below to answer their questions accurately.
+If the answer isn't in the provided context, say so honestly.
+
+--- CODE CONTEXT (truncated) ---
+{code_context if code_context else "Not available. Answer based on general knowledge."}
+
+--- PRIOR ANALYSIS SUMMARY ---
+{analysis_summary if analysis_summary else "Not available."}
+
+RULES:
+- Be concise and developer-friendly.
+- Use plain text. No markdown symbols like # or *.
+- If referencing a specific file or function, name it explicitly.
+- Max 200 words per reply.
+"""
+
+        messages = []
+        for turn in chat_history:
+            role    = turn.get('role', 'user')
+            content = turn.get('content', '')
+            if role in ('user', 'assistant') and content:
+                messages.append({"role": role, "content": [{"text": content}]})
+
+        messages.append({
+            "role": "user",
+            "content": [{"text": f"{system_context}\n\nUser question: {user_query}"}]
+        })
+
+        body = json.dumps({
+            "messages": messages,
+            "inferenceConfig": {
+                "max_new_tokens": 512,
+                "temperature": 0.3
+            }
+        })
+
+        ai_response = invoke_bedrock(body)
+        reply = json.loads(ai_response.get('body').read())['output']['message']['content'][0]['text']
+
+        return {
+            'statusCode': 200,
+            'body': json.dumps({'chat_answer': reply.strip()})
+        }
+
+    except Exception as e:
+        print(f"CHAT_ERROR: {str(e)}")
+        return {
+            'statusCode': 500,
+            'body': json.dumps({'chat_answer': f'Error processing your question: {str(e)}'})
+        }
