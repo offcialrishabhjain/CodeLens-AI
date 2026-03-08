@@ -1346,38 +1346,74 @@
     }
 
     /* ── PARSERS ── */
-    // FIX #1: Tolerates ### 1. OR ### 1: OR ### 1) — Nova Micro sometimes
-    // drops the dot, causing the entire section to fail to parse.
+
     function getSection(raw, n, m) {
-        // Tolerates ### 1. OR ### 1: OR ### 1) — Nova Micro varies header punctuation.
-        // Uses match index arithmetic (not indexOf colon) to avoid slicing at wrong position.
-        const startPat   = new RegExp(`###\\s*${n}[\\s\\.:]`, 'i');
-        const endPat     = m ? new RegExp(`###\\s*${m}[\\s\\.:]`, 'i') : /\[END_OF_ANALYSIS\]/i;
-        const startMatch = raw.match(startPat);
+        // Strategy 1: strict match  ### N. Title:
+        // Strategy 2: loose match   ### N  (any punctuation or none)
+        // Strategy 3: fallback      just the number alone on a line
+        // Tries each in order and uses the first that works.
+        const patterns = [
+            new RegExp(`###\\s*${n}[\\s\\.:\\-\\)]`, 'i'),
+            new RegExp(`##\\s*${n}[\\s\\.:\\-\\)]`, 'i'),
+            new RegExp(`\\b${n}\\s*\\.\\s*[A-Z]`, 'i'),
+        ];
+        const endPatterns = m ? [
+            new RegExp(`###\\s*${m}[\\s\\.:\\-\\)]`, 'i'),
+            new RegExp(`##\\s*${m}[\\s\\.:\\-\\)]`, 'i'),
+            new RegExp(`\\b${m}\\s*\\.\\s*[A-Z]`, 'i'),
+            /\[END_OF_ANALYSIS\]/i,
+        ] : [/\[END_OF_ANALYSIS\]/i];
+
+        let startMatch = null;
+        for (const pat of patterns) {
+            startMatch = raw.match(pat);
+            if (startMatch) break;
+        }
         if (!startMatch) return null;
-        // Scan forward from end of matched header to find the colon ending the title line
-        const searchFrom = startMatch.index + startMatch[0].length;
-        const nextNewline = raw.indexOf('\n', searchFrom);
-        const colonIdx    = raw.indexOf(':', searchFrom);
-        // Content starts after the colon if it's on the same line, else after the header line
-        const contentStart = (colonIdx !== -1 && (nextNewline === -1 || colonIdx < nextNewline))
-            ? colonIdx + 1
-            : (nextNewline !== -1 ? nextNewline + 1 : searchFrom);
-        if (contentStart <= 0) return null;
-        const endMatch = raw.slice(contentStart).match(endPat);
-        const endIdx   = endMatch ? contentStart + endMatch.index : raw.length;
-        return raw.substring(contentStart, endIdx).trim();
+
+        // Move past the header line entirely to get to content
+        const headerLineEnd = raw.indexOf('\n', startMatch.index);
+        let contentStart = headerLineEnd !== -1 ? headerLineEnd + 1 : startMatch.index + startMatch[0].length;
+
+        // Find where this section ends
+        let endIdx = raw.length;
+        for (const epat of endPatterns) {
+            const endMatch = raw.slice(contentStart).match(epat);
+            if (endMatch) {
+                endIdx = Math.min(endIdx, contentStart + endMatch.index);
+            }
+        }
+
+        const result = raw.substring(contentStart, endIdx).trim();
+        return result.length > 20 ? result : null;
     }
 
     function getTagged(text, tag) {
         if (!text) return null;
-        // Tolerate [TAG]: or [TAG] : or [TAG] (no colon) — Nova Micro varies punctuation
-        const pat = new RegExp('\\[' + tag + '\\]\\s*:?', 'i');
-        const match = text.match(pat);
+        // Try multiple tag formats Nova Micro might produce:
+        // [TAG]: content
+        // [TAG] content (no colon)
+        // TAG: content (no brackets)
+        // **TAG**: content (bold markdown)
+        const patterns = [
+            new RegExp('\\[' + tag + '\\]\\s*:?\\s*', 'i'),
+            new RegExp('\\*\\*\\[?' + tag + '\\]?\\*\\*\\s*:?\\s*', 'i'),
+            new RegExp('\\b' + tag + '\\b\\s*:?\\s*', 'i'),
+        ];
+
+        let match = null;
+        for (const pat of patterns) {
+            match = text.match(pat);
+            if (match) break;
+        }
         if (!match) return null;
+
         const contentStart = match.index + match[0].length;
-        const nextTag = text.indexOf('\n[', contentStart);
-        return text.substring(contentStart, nextTag === -1 ? text.length : nextTag).trim() || null;
+        // Next tag boundary — look for [NEXT_TAG] or **NEXT_TAG** pattern
+        const nextTagMatch = text.slice(contentStart).search(/\n\s*\[|\n\s*\*\*/);
+        const endIdx = nextTagMatch !== -1 ? contentStart + nextTagMatch : text.length;
+        const result = text.substring(contentStart, endIdx).trim();
+        return result.length > 5 ? result : null;
     }
     function safeRich(text, label) {
         if (text && text.trim()) return `<div class="rich-content">${clean(text)}</div>`;
