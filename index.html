@@ -37,7 +37,6 @@
             overflow: hidden;
         }
 
-        /* ── TOP BAR ── */
         .topbar {
             display: flex;
             align-items: stretch;
@@ -81,9 +80,7 @@
             letter-spacing: 1px;
             text-transform: uppercase;
         }
-        .topbar-meta-item span {
-            color: var(--beige);
-        }
+        .topbar-meta-item span { color: var(--beige); }
         .topbar-status {
             display: flex;
             align-items: center;
@@ -102,17 +99,15 @@
             border-radius: 50%;
             background: var(--beige-dim);
         }
-        .status-dot.active { background: #4ade80; }
+        .status-dot.active  { background: #4ade80; }
         .status-dot.loading { background: var(--red-bright); }
 
-        /* ── MAIN LAYOUT ── */
         .main {
             display: flex;
             flex: 1;
             overflow: hidden;
         }
 
-        /* ── LEFT SIDEBAR ── */
         .sidebar {
             width: 300px;
             border-right: 1px solid var(--border-mid);
@@ -140,14 +135,8 @@
             align-items: center;
             gap: 8px;
         }
-        .section-label::before {
-            content: '[ ';
-            color: var(--red-accent);
-        }
-        .section-label::after {
-            content: ' ]';
-            color: var(--red-accent);
-        }
+        .section-label::before { content: '[ '; color: var(--red-accent); }
+        .section-label::after  { content: ' ]'; color: var(--red-accent); }
 
         .level-select {
             width: 100%;
@@ -169,7 +158,6 @@
         .level-select:focus { border-color: var(--red-accent); }
         .level-select option { background: var(--bg-panel); }
 
-        /* ZIP UPLOAD BOX */
         .upload-box {
             background: var(--bg-panel);
             border: 1px solid var(--border-mid);
@@ -182,6 +170,15 @@
             color: var(--beige-dim);
             margin-bottom: 10px;
             text-transform: uppercase;
+        }
+        .processing-note {
+            font-family: var(--mono);
+            font-size: 0.6rem;
+            color: var(--beige-dim);
+            line-height: 1.6;
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border);
         }
         .upload-desc {
             font-size: 0.7rem;
@@ -230,7 +227,6 @@
             cursor: not-allowed;
         }
 
-        /* GITHUB BOX */
         .divider-or {
             display: flex;
             align-items: center;
@@ -335,17 +331,6 @@
             100% { transform: translateX(350%); }
         }
 
-        .processing-note {
-            font-family: var(--mono);
-            font-size: 0.6rem;
-            color: var(--beige-dim);
-            line-height: 1.6;
-            margin-top: 16px;
-            padding-top: 16px;
-            border-top: 1px solid var(--border);
-        }
-
-        /* ── TEAM NAME ── */
         .topbar-team {
             display: flex;
             align-items: center;
@@ -370,7 +355,6 @@
             padding: 3px 10px;
         }
 
-        /* ── AUDIT BANNER ── */
         .audit-banner {
             display: flex;
             align-items: center;
@@ -395,12 +379,8 @@
             letter-spacing: 0.5px;
             color: rgba(255,255,255,0.85);
         }
-        .audit-text strong {
-            color: var(--white);
-            font-weight: 700;
-        }
+        .audit-text strong { color: var(--white); font-weight: 700; }
 
-        /* ── DASHBOARD ── */
         .dashboard {
             flex: 1;
             display: flex;
@@ -408,7 +388,6 @@
             overflow: hidden;
         }
 
-        /* NAV TABS */
         .nav-tabs {
             display: flex;
             border-bottom: 1px solid var(--border-mid);
@@ -436,14 +415,9 @@
             background: var(--crimson);
             border-bottom: 2px solid var(--red-bright);
         }
-        .tab-btn .tab-num {
-            font-size: 0.5rem;
-            color: var(--beige-dim);
-            margin-right: 6px;
-        }
+        .tab-btn .tab-num { font-size: 0.5rem; color: var(--beige-dim); margin-right: 6px; }
         .tab-btn.active .tab-num { color: rgba(255,255,255,0.5); }
 
-        /* DISPLAY PANEL */
         .display {
             flex: 1;
             overflow-y: auto;
@@ -456,8 +430,6 @@
         .display::-webkit-scrollbar { width: 4px; }
         .display::-webkit-scrollbar-thumb { background: var(--border-mid); }
 
-        /* PLACEHOLDER */
-        /* ── STATIC PLACEHOLDER ── */
         .placeholder {
             display: flex;
             flex-direction: column;
@@ -488,7 +460,6 @@
             letter-spacing: 2px;
         }
 
-        /* ── LOADING OVERLAY ── */
         #loading-overlay {
             display: none;
             position: absolute;
@@ -503,7 +474,6 @@
         }
         #loading-overlay.active { display: flex; }
 
-        /* big background text */
         .lo-bg-text {
             position: absolute;
             font-family: var(--display);
@@ -514,8 +484,6 @@
             pointer-events: none;
             white-space: nowrap;
         }
-
-        /* scan grid */
         .lo-grid {
             position: absolute;
             inset: 0;
@@ -525,8 +493,6 @@
             background-size: 40px 40px;
             pointer-events: none;
         }
-
-        /* horizontal scan line */
         .lo-scanline {
             position: absolute;
             left: 0; right: 0;
@@ -536,13 +502,11 @@
             box-shadow: 0 0 18px 4px rgba(192,57,43,0.35);
         }
         @keyframes scanmove {
-            0%   { top: 5%; opacity: 0; }
+            0%   { top: 5%;  opacity: 0; }
             5%   { opacity: 1; }
             95%  { opacity: 1; }
             100% { top: 95%; opacity: 0; }
         }
-
-        /* centre content */
         .lo-center {
             position: relative;
             display: flex;
@@ -550,11 +514,7 @@
             align-items: center;
             gap: 28px;
         }
-        .lo-brackets {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }
+        .lo-brackets { display: flex; align-items: center; gap: 20px; }
         .lo-bracket {
             font-family: var(--display);
             font-size: 5rem;
@@ -577,11 +537,7 @@
             text-transform: uppercase;
             text-align: center;
         }
-        .lo-status-line span {
-            color: var(--red-bright);
-        }
-
-        /* progress bar */
+        .lo-status-line span { color: var(--red-bright); }
         .lo-progress-wrap {
             width: 320px;
             height: 2px;
@@ -595,12 +551,10 @@
             animation: progressindeterminate 1.8s ease-in-out infinite;
         }
         @keyframes progressindeterminate {
-            0%   { width: 0%;   margin-left: 0%; }
-            50%  { width: 60%;  margin-left: 20%; }
-            100% { width: 0%;   margin-left: 100%; }
+            0%   { width: 0%;  margin-left: 0%; }
+            50%  { width: 60%; margin-left: 20%; }
+            100% { width: 0%;  margin-left: 100%; }
         }
-
-        /* ticker tape of code tokens */
         .lo-ticker {
             width: 320px;
             overflow: hidden;
@@ -618,11 +572,7 @@
             background: linear-gradient(transparent, var(--bg-panel));
             pointer-events: none;
         }
-        .lo-ticker-inner {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
+        .lo-ticker-inner { display: flex; flex-direction: column; gap: 4px; }
         .lo-tick-line {
             font-family: var(--mono);
             font-size: 0.62rem;
@@ -638,19 +588,11 @@
             from { opacity: 0; transform: translateY(4px); }
             to   { opacity: 1; transform: translateY(0); }
         }
-
-        /* corner decorations */
-        .lo-corner {
-            position: absolute;
-            width: 20px;
-            height: 20px;
-        }
-        .lo-corner.tl { top: 24px; left: 24px; border-top: 1px solid var(--crimson); border-left: 1px solid var(--crimson); }
-        .lo-corner.tr { top: 24px; right: 24px; border-top: 1px solid var(--crimson); border-right: 1px solid var(--crimson); }
-        .lo-corner.bl { bottom: 24px; left: 24px; border-bottom: 1px solid var(--crimson); border-left: 1px solid var(--crimson); }
+        .lo-corner { position: absolute; width: 20px; height: 20px; }
+        .lo-corner.tl { top: 24px;    left: 24px;  border-top: 1px solid var(--crimson); border-left: 1px solid var(--crimson); }
+        .lo-corner.tr { top: 24px;    right: 24px; border-top: 1px solid var(--crimson); border-right: 1px solid var(--crimson); }
+        .lo-corner.bl { bottom: 24px; left: 24px;  border-bottom: 1px solid var(--crimson); border-left: 1px solid var(--crimson); }
         .lo-corner.br { bottom: 24px; right: 24px; border-bottom: 1px solid var(--crimson); border-right: 1px solid var(--crimson); }
-
-        /* coord readout */
         .lo-coords {
             position: absolute;
             bottom: 32px;
@@ -662,11 +604,9 @@
             gap: 32px;
         }
 
-        /* WIDGET PANELS */
         .widget { display: none; }
         .widget.active { display: block; }
 
-        /* TRUNCATION BANNER */
         .trunc-banner {
             background: rgba(192,57,43,0.08);
             border-left: 3px solid var(--red-accent);
@@ -679,7 +619,6 @@
             display: none;
         }
 
-        /* PARSE ERROR */
         .parse-error {
             background: rgba(192,57,43,0.06);
             border: 1px solid rgba(192,57,43,0.3);
@@ -690,7 +629,6 @@
             line-height: 1.6;
         }
 
-        /* SECTION HEADER (editorial) */
         .section-head {
             display: flex;
             align-items: baseline;
@@ -714,7 +652,6 @@
             text-transform: uppercase;
         }
 
-        /* SUB TABS */
         .sub-tabs {
             display: flex;
             gap: 0;
@@ -742,7 +679,6 @@
         .sub-view { display: none; }
         .sub-view.active { display: block; }
 
-        /* RICH CONTENT */
         .rich-content {
             font-family: var(--sans);
             font-size: 0.85rem;
@@ -752,7 +688,6 @@
             max-width: 780px;
         }
 
-        /* VISUALIZER */
         .viz-tree {
             font-family: var(--mono);
             font-size: 0.78rem;
@@ -765,7 +700,6 @@
             padding: 24px;
         }
 
-        /* SCORE CARD */
         .score-card {
             background: var(--bg-panel);
             border: 1px solid var(--border-mid);
@@ -785,15 +719,8 @@
         .score-high { color: #4ade80; }
         .score-mid  { color: #fbbf24; }
         .score-low  { color: var(--red-bright); }
-        .score-bar-wrap {
-            flex: 1;
-            height: 3px;
-            background: var(--border-mid);
-        }
-        .score-bar-fill {
-            height: 100%;
-            transition: width 0.8s ease;
-        }
+        .score-bar-wrap { flex: 1; height: 3px; background: var(--border-mid); }
+        .score-bar-fill { height: 100%; transition: width 0.8s ease; }
         .fill-high { background: #4ade80; }
         .fill-mid  { background: #fbbf24; }
         .fill-low  { background: var(--red-bright); }
@@ -806,7 +733,6 @@
             margin-bottom: 8px;
         }
 
-        /* SIMULATOR */
         .sim-instr {
             background: rgba(139,26,26,0.15);
             border-left: 3px solid var(--crimson);
@@ -856,7 +782,6 @@
         }
         .info-btn:hover { background: var(--red-bright); }
 
-        /* MODAL */
         .modal {
             display: none;
             position: fixed;
@@ -901,7 +826,6 @@
         }
         .modal-close:hover { color: var(--white); }
 
-        /* ── CHAT ── */
         #w-7 { height: 100%; }
         .chat-wrap {
             display: flex;
@@ -1006,7 +930,6 @@
 </head>
 <body>
 
-    <!-- ── TOP BAR ── -->
     <div class="topbar">
         <div class="topbar-logo">
             <div>
@@ -1029,7 +952,6 @@
         </div>
     </div>
 
-    <!-- ── AUDIT NOTICE BANNER ── -->
     <div class="audit-banner">
         <span class="audit-tag">[ AUDIT NOTICE ]</span>
         <span class="audit-text">Analysis may take <strong>60–90 seconds</strong> to ensure complete architectural accuracy.</span>
@@ -1037,10 +959,7 @@
 
     <div class="main">
 
-        <!-- ── SIDEBAR ── -->
         <div class="sidebar">
-
-            <!-- LEVEL -->
             <div class="sidebar-section">
                 <div class="section-label">EXPERIENCE LEVEL</div>
                 <select id="user-level" class="level-select">
@@ -1050,7 +969,6 @@
                 </select>
             </div>
 
-            <!-- ZIP UPLOAD -->
             <div class="sidebar-section">
                 <div class="section-label">ZIP UPLOAD</div>
                 <div class="upload-box">
@@ -1066,12 +984,10 @@
                 </div>
             </div>
 
-            <!-- OR -->
             <div class="sidebar-section" style="padding: 14px 20px;">
                 <div class="divider-or"><span class="divider-text">OR</span></div>
             </div>
 
-            <!-- GITHUB -->
             <div class="sidebar-section">
                 <div class="section-label">GITHUB REPO</div>
                 <div class="github-box">
@@ -1087,17 +1003,12 @@
                 </div>
             </div>
 
-            <!-- LOADER -->
             <div class="sidebar-section" style="padding: 20px;">
                 <div id="loader-bar" class="loader-bar"></div>
             </div>
-
         </div>
 
-        <!-- ── DASHBOARD ── -->
         <div class="dashboard">
-
-            <!-- TABS -->
             <div class="nav-tabs">
                 <button class="tab-btn" data-target="w-1"><span class="tab-num">01</span>VISUALIZER</button>
                 <button class="tab-btn" data-target="w-2"><span class="tab-num">02</span>EXPLANATION</button>
@@ -1108,17 +1019,14 @@
                 <button class="tab-btn" data-target="w-7"><span class="tab-num">07</span>DOUBTS</button>
             </div>
 
-            <!-- DISPLAY -->
             <div class="display" id="display-panel">
 
-                <!-- PLACEHOLDER -->
                 <div class="placeholder" id="placeholder">
                     <div class="placeholder-title">CODELENS</div>
                     <div class="placeholder-bracket">[ WAITING FOR DATA STREAM ]</div>
                     <div class="placeholder-sub">Upload a project to begin analysis</div>
                 </div>
 
-                <!-- LOADING OVERLAY -->
                 <div id="loading-overlay">
                     <div class="lo-bg-text">ANALYSING</div>
                     <div class="lo-grid"></div>
@@ -1144,7 +1052,6 @@
                     </div>
                 </div>
 
-                <!-- WIDGETS -->
                 <div id="w-1" class="widget"></div>
                 <div id="w-2" class="widget"></div>
                 <div id="w-3" class="widget"></div>
@@ -1169,7 +1076,6 @@
         </div>
     </div>
 
-    <!-- MODAL -->
     <div id="infoModal" class="modal">
         <div class="modal-box">
             <button class="modal-close" onclick="document.getElementById('infoModal').style.display='none'">✕</button>
@@ -1179,7 +1085,6 @@
     </div>
 
 <script>
-    /* ── AWS INIT ── */
     AWS.config.region = 'ap-south-1';
     AWS.config.credentials = new AWS.CognitoIdentityCredentials({
         IdentityPoolId: 'ap-south-1:2d3fed8e-b3ce-41a3-a779-4896ea437e16'
@@ -1195,21 +1100,19 @@
     let currentFileName = "";
     let chatHistory = [];
 
-    /* ── UI HELPERS ── */
     function clean(text) { return (text || '').replace(/[#*]/g, '').trim(); }
 
     function setStatus(state, label) {
-        const dot   = document.getElementById('status-dot');
-        const lbl   = document.getElementById('status-label');
-        const txt   = document.getElementById('status-text');
-        const bar   = document.getElementById('loader-bar');
+        const dot = document.getElementById('status-dot');
+        const lbl = document.getElementById('status-label');
+        const txt = document.getElementById('status-text');
+        const bar = document.getElementById('loader-bar');
         dot.className = 'status-dot ' + (state === 'loading' ? 'loading' : state === 'active' ? 'active' : '');
         lbl.textContent = label;
         txt.textContent = label;
         bar.className   = 'loader-bar ' + (state === 'loading' ? 'active' : '');
     }
 
-    /* ── LOADING OVERLAY TICKER ── */
     const TICK_MESSAGES = [
         ['bright', '> INITIALISING CODELENS ENGINE...'],
         ['', '  reading archive structure...'],
@@ -1251,8 +1154,8 @@
     let coordInterval = null;
 
     function startLoadingOverlay() {
-        const overlay = document.getElementById('loading-overlay');
-        const ticker  = document.getElementById('lo-ticker');
+        const overlay   = document.getElementById('loading-overlay');
+        const ticker    = document.getElementById('lo-ticker');
         const statusTxt = document.getElementById('lo-status-txt');
         overlay.classList.add('active');
         document.getElementById('placeholder').style.display = 'none';
@@ -1269,16 +1172,13 @@
             line.className = 'lo-tick-line' + (cls ? ' ' + cls : '');
             line.textContent = txt;
             ticker.appendChild(line);
-            // keep only last 8 lines visible
             while (ticker.children.length > 8) ticker.removeChild(ticker.firstChild);
-            // rotate status label
             if (tickIdx % 5 === 0) {
                 statusIdx = (statusIdx + 1) % statusLabels.length;
                 statusTxt.textContent = statusLabels[statusIdx];
             }
         }, 420);
 
-        // animated coordinate readout
         coordInterval = setInterval(() => {
             document.getElementById('lo-coord-x').textContent = 'X: ' + String(Math.floor(Math.random()*9999)).padStart(4,'0');
             document.getElementById('lo-coord-y').textContent = 'Y: ' + String(Math.floor(Math.random()*9999)).padStart(4,'0');
@@ -1323,7 +1223,6 @@
         document.getElementById('infoModal').style.display = 'block';
     };
 
-    /* TABS */
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -1408,13 +1307,26 @@
     function pollForResults(fileName) {
         const docClient = new AWS.DynamoDB.DocumentClient();
         let attempts = 0;
-        const MAX = 30, BASE_MS = 3000, CAP_MS = 15000;
+        // FIX: start polling later — first attempt at 15s since Bedrock
+        // needs at minimum 30-60s for a 250K context analysis.
+        // Subsequent attempts use gentler backoff to avoid burning retries early.
+        const INITIAL_DELAY_MS = 15000;
+        const BASE_MS          = 5000;
+        const CAP_MS           = 15000;
+        const MAX              = 30;
+
         function scheduleNext() {
             attempts++;
-            if (attempts > MAX) { setLoading(false); setStatus('', 'TIMEOUT'); alert('Analysis timed out. Please try again.'); return; }
-            const delay = Math.min(BASE_MS * Math.pow(1.5, attempts - 1), CAP_MS);
+            if (attempts > MAX) {
+                setLoading(false);
+                setStatus('', 'TIMEOUT');
+                alert('Analysis timed out. Please try again.');
+                return;
+            }
+            const delay = Math.min(BASE_MS * Math.pow(1.4, attempts - 1), CAP_MS);
             setTimeout(poll, delay);
         }
+
         function poll() {
             docClient.get({ TableName: 'CodeLensResults', Key: { fileName } }, (err, data) => {
                 if (err) { console.warn('DynamoDB poll error:', err); scheduleNext(); return; }
@@ -1422,16 +1334,23 @@
                     setLoading(false);
                     setStatus('active', 'SYNCED');
                     renderResults(data.Item.analysis, data.Item.truncated);
-                } else { scheduleNext(); }
+                } else {
+                    scheduleNext();
+                }
             });
         }
-        poll();
+
+        // FIX: wait 15s before first poll attempt instead of hitting DynamoDB
+        // immediately when the model hasn't even started responding yet.
+        setTimeout(poll, INITIAL_DELAY_MS);
     }
 
     /* ── PARSERS ── */
+    // FIX #1: Tolerates ### 1. OR ### 1: OR ### 1) — Nova Micro sometimes
+    // drops the dot, causing the entire section to fail to parse.
     function getSection(raw, n, m) {
-        const startPat   = new RegExp(`###\\s*${n}\\.`, 'i');
-        const endPat     = m ? new RegExp(`###\\s*${m}\\.`, 'i') : /\[END_OF_ANALYSIS\]/i;
+        const startPat   = new RegExp(`###\\s*${n}[\\.:)]`, 'i');
+        const endPat     = m ? new RegExp(`###\\s*${m}[\\.:)]`, 'i') : /\[END_OF_ANALYSIS\]/i;
         const startMatch = raw.match(startPat);
         if (!startMatch) return null;
         const startIdx = raw.indexOf(':', startMatch.index);
@@ -1440,6 +1359,7 @@
         const endIdx   = endMatch ? startIdx + endMatch.index : raw.length;
         return raw.substring(startIdx + 1, endIdx).trim();
     }
+
     function getTagged(text, tag) {
         if (!text) return null;
         const marker = `[${tag}]:`;
@@ -1470,8 +1390,8 @@
         const s6 = getSection(raw, 6, null);
 
         const bannerHTML = wasTruncated
-        ? `<div class="trunc-banner" style="display:block">⚠ LARGE REPO DETECTED — CODEBASE EXCEEDED ANALYSIS LIMIT FOR PROTOTYPE. RESULTS REFLECT TOP 50 FILES UP TO ~250,000 CHARACTERS. FILES PRIORITISED BY TYPE: SOURCE CODE FIRST, THEN CONFIG, THEN MARKUP.</div>`
-        : '';
+            ? `<div class="trunc-banner" style="display:block">⚠ LARGE REPO DETECTED — CODEBASE EXCEEDED ANALYSIS LIMIT FOR PROTOTYPE. RESULTS REFLECT TOP 50 FILES UP TO ~250,000 CHARACTERS. FILES PRIORITISED BY TYPE: SOURCE CODE FIRST, THEN CONFIG, THEN MARKUP.</div>`
+            : '';
 
         const sHead = (num, title) =>
             `<div class="section-head"><div class="section-head-num">${num}</div><div class="section-head-title">${title}</div></div>`;
