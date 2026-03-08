@@ -1470,8 +1470,8 @@
         const s6 = getSection(raw, 6, null);
 
         const bannerHTML = wasTruncated
-            ? `<div class="trunc-banner" style="display:block">⚠ LARGE REPO DETECTED — CODEBASE EXCEEDED ANALYSIS LIMIT. RESULTS REFLECT FIRST ~80,000 CHARACTERS. SOME FILES MAY NOT BE INCLUDED.</div>`
-            : '';
+        ? `<div class="trunc-banner" style="display:block">⚠ LARGE REPO DETECTED — CODEBASE EXCEEDED ANALYSIS LIMIT. RESULTS REFLECT FIRST ~150,000 CHARACTERS. FILES PRIORITISED BY TYPE: SOURCE CODE FIRST, THEN CONFIG, THEN MARKUP.</div>`
+        : '';
 
         const sHead = (num, title) =>
             `<div class="section-head"><div class="section-head-num">${num}</div><div class="section-head-title">${title}</div></div>`;
