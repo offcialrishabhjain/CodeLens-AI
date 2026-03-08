@@ -1349,15 +1349,24 @@
     // FIX #1: Tolerates ### 1. OR ### 1: OR ### 1) — Nova Micro sometimes
     // drops the dot, causing the entire section to fail to parse.
     function getSection(raw, n, m) {
-        const startPat   = new RegExp(`###\\s*${n}[\\.:)]`, 'i');
-        const endPat     = m ? new RegExp(`###\\s*${m}[\\.:)]`, 'i') : /\[END_OF_ANALYSIS\]/i;
+        // Tolerates ### 1. OR ### 1: OR ### 1) — Nova Micro varies header punctuation.
+        // Uses match index arithmetic (not indexOf colon) to avoid slicing at wrong position.
+        const startPat   = new RegExp(`###\\s*${n}[\\s\\.:]`, 'i');
+        const endPat     = m ? new RegExp(`###\\s*${m}[\\s\\.:]`, 'i') : /\[END_OF_ANALYSIS\]/i;
         const startMatch = raw.match(startPat);
         if (!startMatch) return null;
-        const startIdx = raw.indexOf(':', startMatch.index);
-        if (startIdx === -1) return null;
-        const endMatch = raw.slice(startIdx).match(endPat);
-        const endIdx   = endMatch ? startIdx + endMatch.index : raw.length;
-        return raw.substring(startIdx + 1, endIdx).trim();
+        // Scan forward from end of matched header to find the colon ending the title line
+        const searchFrom = startMatch.index + startMatch[0].length;
+        const nextNewline = raw.indexOf('\n', searchFrom);
+        const colonIdx    = raw.indexOf(':', searchFrom);
+        // Content starts after the colon if it's on the same line, else after the header line
+        const contentStart = (colonIdx !== -1 && (nextNewline === -1 || colonIdx < nextNewline))
+            ? colonIdx + 1
+            : (nextNewline !== -1 ? nextNewline + 1 : searchFrom);
+        if (contentStart <= 0) return null;
+        const endMatch = raw.slice(contentStart).match(endPat);
+        const endIdx   = endMatch ? contentStart + endMatch.index : raw.length;
+        return raw.substring(contentStart, endIdx).trim();
     }
 
     function getTagged(text, tag) {
