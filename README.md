@@ -27,7 +27,8 @@ Millions of developers are learning to code — but reading and understanding re
 |  03 | **Execution Simulator** | Traces call graphs and variable flow statically — understand how code runs without executing it |
 |  04 | **Code Optimizer** | Detects naming issues, duplicate logic, security vulnerabilities, and performance bottlenecks with specific fixes |
 |  05 | **Health Score** | Scores the codebase across Readability, Modularity, Security, and Test Coverage — each out of 10 |
-|  06 | **Doubts Chat** | Ask anything about your uploaded project — context-aware Q&A powered by Amazon Nova |
+|  06 | **Mentor** | Gives interview and viva questions, and gives points for resume and about system design |
+|  07 | **Doubts Chat** | Ask anything about your uploaded project — context-aware Q&A powered by Amazon Nova |
 
 ---
 
@@ -94,11 +95,8 @@ Developer uploads ZIP or pastes GitHub URL
 
 ##  Resilience Architecture
 
-The system is built to never silently fail:
-
 - **Multi-model fallback** — 3 models × 3 retries = up to 9 inference attempts before a hard error
 - **Exponential backoff** — 1s → 2s → 4s (capped at 8s) per model on `ThrottlingException`
-- **Immediate fallback** on `ModelErrorException` and `ServiceUnavailableException` — retries won't fix these, so we move on instantly
 - **Chunked download** — 64 KB chunks with live byte-count enforcement, not just `Content-Length` header trust
 - **ZIP magic byte validation** — rejects non-ZIP files even if `.zip` extension is present
 - **DynamoDB polling** — exponential backoff starting at 3s, 1.5× multiplier, 15s cap, 30 max attempts
@@ -133,7 +131,7 @@ codelens-github-fetcher     # GitHub URL resolver and ZIP downloader
    - Drop a ZIP (any GitHub repo → `Code → Download ZIP`, max 50 MB)
    - Paste a public GitHub URL directly
 4. **Hit Analyse** — wait ~60–90 seconds for full processing
-5. **Explore** all 6 tabs — architecture, explanation, simulator, optimizer, health score, and ask doubts
+5. **Explore** all 7 tabs — architecture, explanation, simulator, optimizer, health score, mentor and ask doubts
 
 ---
 
@@ -144,7 +142,16 @@ codelens-github-fetcher     # GitHub URL resolver and ZIP downloader
 - **Grounded chat** — each Doubts chat turn sends the prior analysis summary + code context, keeping answers relevant to the actual uploaded project
 - **Structured output** — a strict 6-section numbered prompt format ensures every AI response is consistently parseable by the frontend
 - **Regional resilience** — cross-region fallback means users in AP-SOUTH-1 are never blocked by a regional outage
+  
+---
+##  Roadmap
 
+- [ ] User authentication + project history dashboard
+- [ ] Private GitHub repo support via OAuth
+- [ ] 30-day personalised learning path generation
+- [ ] Skill Gap Analysis and Auto-Generated Learning Path
+- [ ] Hash Inputs Skip Repeat LLM Calls
+- [ ] VS Code extension
 
 ---
 
