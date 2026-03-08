@@ -1371,10 +1371,11 @@
 
     function getTagged(text, tag) {
         if (!text) return null;
-        const marker = `[${tag}]:`;
-        const s = text.indexOf(marker);
-        if (s === -1) return null;
-        const contentStart = s + marker.length;
+        // Tolerate [TAG]: or [TAG] : or [TAG] (no colon) — Nova Micro varies punctuation
+        const pat = new RegExp('\\[' + tag + '\\]\\s*:?', 'i');
+        const match = text.match(pat);
+        if (!match) return null;
+        const contentStart = match.index + match[0].length;
         const nextTag = text.indexOf('\n[', contentStart);
         return text.substring(contentStart, nextTag === -1 ? text.length : nextTag).trim() || null;
     }
@@ -1431,7 +1432,7 @@
         const treeContainer = document.getElementById('sim-tree-container');
         if (s3) {
             let lastNodes = { 0: treeContainer };
-            s3.split('\n').filter(l => l.includes('|')).forEach(line => {
+            s3.split('\n').filter(l => l.trim().startsWith('>>') || l.trim().startsWith('..') || l.trim().startsWith('....')).forEach(line => {
                 let depth = 0;
                 if (line.trim().startsWith('....'))    depth = 2;
                 else if (line.trim().startsWith('..')) depth = 1;
