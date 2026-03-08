@@ -1342,20 +1342,24 @@
 
     /* ── PARSERS (FIXED) ── */
 
+    // Stores the complete raw AI response so getTagged can search it directly
+    // as a fallback when getSection fails to isolate a section boundary
+    let _rawGlobal = '';
+
     function getSection(raw, n, m) {
-        // Tries 3 header formats: ### N., ## N., plain N. at line start
-        // Handles all casing and punctuation variants the model may produce
+        // 5 header formats — covers ###, ##, **, plain number, indented number
         const startPatterns = [
             new RegExp(`###\\s*${n}[\\s\\.:)\\-]`, 'i'),
             new RegExp(`##\\s*${n}[\\s\\.:)\\-]`, 'i'),
+            new RegExp(`\\*\\*${n}[\\s\\.:)\\-]`, 'i'),
             new RegExp(`^${n}[\\s\\.:)\\-]`, 'im'),
+            new RegExp(`^\\s*${n}\\s*\\.`, 'im'),
         ];
 
         let startIdx = -1;
         for (const pat of startPatterns) {
             const match = raw.match(pat);
             if (match) {
-                // Skip past the entire header line to get to content
                 const lineEnd = raw.indexOf('\n', match.index);
                 startIdx = lineEnd !== -1 ? lineEnd + 1 : match.index + match[0].length;
                 break;
@@ -1368,7 +1372,9 @@
             const endPatterns = [
                 new RegExp(`###\\s*${m}[\\s\\.:)\\-]`, 'i'),
                 new RegExp(`##\\s*${m}[\\s\\.:)\\-]`, 'i'),
+                new RegExp(`\\*\\*${m}[\\s\\.:)\\-]`, 'i'),
                 new RegExp(`^${m}[\\s\\.:)\\-]`, 'im'),
+                new RegExp(`^\\s*${m}\\s*\\.`, 'im'),
                 /\[END_OF_ANALYSIS\]/i,
             ];
             for (const pat of endPatterns) {
@@ -1386,33 +1392,39 @@
     }
 
     function getTagged(text, tag) {
-        if (!text) return null;
+        // Try on the given section text first, then fall back to the full raw output.
+        // This means even if getSection fails to isolate section 4, the [BAD_NAMING]
+        // etc. tags are still found directly in the complete model response.
+        const sources = [];
+        if (text && text.trim()) sources.push(text);
+        if (_rawGlobal) sources.push(_rawGlobal);
 
-        // Handles [TAG]:, [TAG] (no colon), **[TAG]**, **TAG**, plain TAG:
         const tagPatterns = [
             new RegExp(`\\[${tag}\\]\\s*:?\\s*`, 'i'),
             new RegExp(`\\*\\*\\[?${tag}\\]?\\*\\*\\s*:?\\s*`, 'i'),
             new RegExp(`^${tag}\\s*:?\\s*`, 'im'),
         ];
 
-        let matchIdx = -1, matchLen = 0;
-        for (const pat of tagPatterns) {
-            const m = text.match(pat);
-            if (m) { matchIdx = m.index; matchLen = m[0].length; break; }
+        for (const src of sources) {
+            let matchIdx = -1, matchLen = 0;
+            for (const pat of tagPatterns) {
+                const m = src.match(pat);
+                if (m) { matchIdx = m.index; matchLen = m[0].length; break; }
+            }
+            if (matchIdx === -1) continue;
+
+            const contentStart = matchIdx + matchLen;
+            const remaining = src.slice(contentStart);
+
+            // Boundary: next [ALL_CAPS_TAG] or **ALL_CAPS_TAG** at start of line
+            const nextTagPattern = /\n\s*\[([A-Z_]{3,})\]|\n\s*\*\*\[?([A-Z_]{3,})\]?\*\*/g;
+            const nextMatch = nextTagPattern.exec(remaining);
+            const endIdx = nextMatch ? contentStart + nextMatch.index : Math.min(src.length, contentStart + 8000);
+
+            const result = src.substring(contentStart, endIdx).trim();
+            if (result.length > 5) return result;
         }
-        if (matchIdx === -1) return null;
-
-        const contentStart = matchIdx + matchLen;
-        const remaining = text.slice(contentStart);
-
-        // Next boundary = [ALL_CAPS_TAG] or **ALL_CAPS_TAG** at the start of a line
-        // Requires 3+ uppercase chars/underscores to avoid false positives on inline brackets
-        const nextTagPattern = /\n\s*\[([A-Z_]{3,})\]|\n\s*\*\*\[?([A-Z_]{3,})\]?\*\*/g;
-        const nextMatch = nextTagPattern.exec(remaining);
-        const endIdx = nextMatch ? contentStart + nextMatch.index : text.length;
-
-        const result = text.substring(contentStart, endIdx).trim();
-        return result.length > 5 ? result : null;
+        return null;
     }
 
     function safeRich(text, label) {
@@ -1427,6 +1439,7 @@
     /* ── RENDER ── */
     function renderResults(raw, wasTruncated) {
         document.querySelector('.tab-btn[data-target="w-1"]').click();
+        _rawGlobal = raw;  // make full text available to getTagged fallback
 
         const s1 = getSection(raw, 1, 2);
         const s2 = getSection(raw, 2, 3);
@@ -1434,6 +1447,7 @@
         const s4 = getSection(raw, 4, 5);
         const s5 = getSection(raw, 5, 6);
         const s6 = getSection(raw, 6, null);
+
 
         const bannerHTML = wasTruncated
             ? `<div class="trunc-banner" style="display:block">⚠ LARGE REPO DETECTED — CODEBASE EXCEEDED ANALYSIS LIMIT FOR PROTOTYPE. RESULTS REFLECT TOP 50 FILES UP TO ~250,000 CHARACTERS. FILES PRIORITISED BY TYPE: SOURCE CODE FIRST, THEN CONFIG, THEN MARKUP.</div>`
